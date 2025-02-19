@@ -1,2 +1,10 @@
 # tcms-test-runner
-Script for running tests and saving to the database
+
+A script for running tests and saving results to a database.
+
+## Installation
+
+To install the package, run the following command:
+
+```bash
+npm install @yurifyodorov/tcms-test-runner

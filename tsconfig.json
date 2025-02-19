@@ -6,9 +6,9 @@
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationDir": "./dist/types"
   },
-  "include": ["src",
-    "src/bin"
-  ]
+  "include": ["src", "bin"]
 }

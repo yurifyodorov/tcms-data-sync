@@ -10,7 +10,6 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",
-    "patch": "npm version patch",
     "publish": "npm publish --access public"
   },
   "dependencies": {

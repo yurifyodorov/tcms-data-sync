@@ -1,8 +1,8 @@
-import runTests from "./testRunner.js";
-import saveBrowserDetails from "./browserInfo.js";
-import saveSystemInfo from "./systemInfo.js";
-import saveResults from "./resultsParser.js";
-import sendSlackReport from "./slackNotifier.js";
+import runTests from "./testRunner";
+import saveBrowserDetails from "./browserInfo";
+import saveSystemInfo from "./systemInfo";
+import saveResults from "./resultsParser";
+import sendSlackReport from "./slackNotifier";
 
 export {
     runTests,

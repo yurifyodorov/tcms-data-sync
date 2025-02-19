@@ -4,8 +4,6 @@ import saveSystemInfo from "../systemInfo";
 import saveResults from "../resultsParser";
 import sendSlackReport from "../slackNotifier";
 
-console.log("🚀 Запуск tcms-test-runner...");
-
 runTests();
 saveBrowserDetails();
 saveSystemInfo();

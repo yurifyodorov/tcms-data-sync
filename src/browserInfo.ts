@@ -1,5 +1,5 @@
 const saveBrowserDetails = (): void => {
-    console.log("✅ - Функция saveBrowserDetails выполнена успешно!");
+    console.log("✅ Функция saveBrowserDetails выполнена успешно!");
 };
 
 export default saveBrowserDetails;

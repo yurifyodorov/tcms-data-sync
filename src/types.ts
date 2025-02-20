@@ -9,6 +9,7 @@ export interface Step {
     result: {
         status: 'passed' | 'failed' | 'skipped';
         duration: number;
+        error_message?: string;
     };
 }
 

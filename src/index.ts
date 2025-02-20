@@ -1,9 +1,9 @@
 import { saveResults } from "./resultsParser";
 import { sendSlackReport } from "./slackNotifier";
 
-const runner = {
+const tcms = {
     saveResults,
     sendSlackReport
 };
 
-export default runner;
+export default tcms;

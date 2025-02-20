@@ -11,17 +11,38 @@ import * as fs from 'fs';
  * @param encoding The file encoding, default is 'utf8'.
  * @returns Simplified test data with the 'embeddings' fields removed.
  */
-
 export function simplifyTestData(filePath: string | string[], encoding: BufferEncoding = 'utf8') {
+    console.log("Received filePath:", filePath);
+
     const pathToUse = Array.isArray(filePath) ? filePath[0] : filePath;
 
     if (typeof pathToUse !== 'string') {
         throw new Error('The provided filePath must be a string or an array of strings.');
     }
 
-    const fileContent = fs.readFileSync(pathToUse, encoding);
+    console.log("Using file path:", pathToUse);
 
-    const testData = JSON.parse(fileContent);
+    let fileContent;
+    try {
+        fileContent = fs.readFileSync(pathToUse, encoding);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(`Failed to read file at path: ${pathToUse}. Error: ${error.message}`);
+        } else {
+            throw new Error(`Unknown error occurred while reading the file at path: ${pathToUse}`);
+        }
+    }
+
+    let testData;
+    try {
+        testData = JSON.parse(fileContent);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error(`Failed to parse JSON from file at path: ${pathToUse}. Error: ${error.message}`);
+        } else {
+            throw new Error(`Unknown error occurred while parsing the JSON from file at path: ${pathToUse}`);
+        }
+    }
 
     const removeEmbeddings = (data: any): any => {
         if (Array.isArray(data)) {

@@ -8,13 +8,15 @@ const runTests = (specPaths: string[], browser: string): void => {
     const specString = specPaths.join(',');
 
     try {
+        console.log('Running Cypress command...');
         execSync(
-            `cypress run --browser ${browser} --spec '${specString}' --env browserName=${browser},runId=${runId} --no-runner-ui`,
+            `cypress run --browser ${browser} --spec "${specString}" --env browserName=${browser},runId=${runId} --no-runner-ui --headless`,
             { stdio: 'inherit' }
         );
         console.log(`✅ Tests executed successfully`);
     } catch (error: any) {
         console.error(`❌ Error during test execution:`, error.message);
+        console.error(error.stack);
     }
 };
 

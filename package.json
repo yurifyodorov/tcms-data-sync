@@ -1,7 +1,7 @@
 {
-  "name": "@yurifyodorov/tcms-test-runner",
-  "version": "0.1.35",
-  "description": "NPM package for running tests",
+  "name": "@yurifyodorov/tcms-data-sync",
+  "version": "0.1.36",
+  "description": "NPM package for processing and syncing test data to TCMS",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "scripts": {

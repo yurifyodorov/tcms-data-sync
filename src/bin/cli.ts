@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { runTests } from "../testRunner";
-import saveBrowserDetails from "../browserInfo";
-import saveSystemInfo from "../systemInfo";
-import saveResults from "../resultsParser";
-import sendSlackReport from "../slackNotifier";
+import { saveBrowserDetails } from "../browserInfo";
+import { saveSystemInfo } from "../systemInfo";
+import { saveResults } from "../resultsParser";
+import { sendSlackReport } from "../slackNotifier";
 import * as process from "process";
 
 const args = process.argv.slice(2);

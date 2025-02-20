@@ -1,8 +1,8 @@
 import { runTests } from "./testRunner";
-import saveBrowserDetails from "./browserInfo";
-import saveSystemInfo from "./systemInfo";
-import saveResults from "./resultsParser";
-import sendSlackReport from "./slackNotifier";
+import { saveBrowserDetails } from "./browserInfo";
+import { saveSystemInfo } from "./systemInfo";
+import { saveResults } from "./resultsParser";
+import { sendSlackReport } from "./slackNotifier";
 
 const runner = {
     runTests,

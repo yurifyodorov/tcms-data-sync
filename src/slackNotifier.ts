@@ -5,4 +5,4 @@ const sendSlackReport = async (): Promise<void> => {
     // В будущем сюда добавится логика отправки данных в Slack
 };
 
-export default sendSlackReport;
+export { sendSlackReport };

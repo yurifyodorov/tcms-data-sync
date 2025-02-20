@@ -6,7 +6,6 @@
   "types": "dist/types/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/cli.js",
     "publish": "npm publish --access public"
   },
   "dependencies": {

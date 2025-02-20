@@ -4,10 +4,12 @@ import saveSystemInfo from "./systemInfo";
 import saveResults from "./resultsParser";
 import sendSlackReport from "./slackNotifier";
 
-export {
+const runner = {
     runTests,
     saveBrowserDetails,
     saveSystemInfo,
     saveResults,
     sendSlackReport
 };
+
+export default runner;

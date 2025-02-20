@@ -9,6 +9,8 @@
     "publish": "npm publish --access public"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2",
+    "@prisma/client": "^6.4.0",
     "axios": "^1.6.0"
   },
   "devDependencies": {

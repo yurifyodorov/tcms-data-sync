@@ -12,8 +12,14 @@ import * as fs from 'fs';
  * @returns Simplified test data with the 'embeddings' fields removed.
  */
 
-export function simplifyTestData(filePath: string, encoding: BufferEncoding = 'utf8') {
-    const fileContent = fs.readFileSync(filePath, encoding);
+export function simplifyTestData(filePath: string | string[], encoding: BufferEncoding = 'utf8') {
+    const pathToUse = Array.isArray(filePath) ? filePath[0] : filePath;
+
+    if (typeof pathToUse !== 'string') {
+        throw new Error('The provided filePath must be a string or an array of strings.');
+    }
+
+    const fileContent = fs.readFileSync(pathToUse, encoding);
 
     const testData = JSON.parse(fileContent);
 

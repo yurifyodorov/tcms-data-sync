@@ -6,13 +6,14 @@ const runTests = (specPaths: string[], browser: string): void => {
     console.log(`🟢 Running tests with runId: ${runId}`);
 
     const specString = specPaths.join(',');
+    console.log('Test spec paths:', specString);
 
     try {
-        console.log('Running Cypress command...');
-        execSync(
-            `cypress run --browser ${browser} --spec "${specString}" --env browserName=${browser},runId=${runId} --no-runner-ui --headless`,
-            { stdio: 'inherit' }
-        );
+        const command = `cypress run --browser ${browser} --spec "${specString}" --env browserName=${browser},runId=${runId} --no-runner-ui --headless`;
+        console.log(`Running command: ${command}`);
+
+        execSync(command, { stdio: 'inherit' });
+
         console.log(`✅ Tests executed successfully`);
     } catch (error: any) {
         console.error(`❌ Error during test execution:`, error.message);

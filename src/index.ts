@@ -1,4 +1,4 @@
-import runTests from "./testRunner";
+import { runTests } from "./testRunner";
 import saveBrowserDetails from "./browserInfo";
 import saveSystemInfo from "./systemInfo";
 import saveResults from "./resultsParser";

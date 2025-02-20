@@ -33,6 +33,8 @@ const saveResults = async (
     console.log(`runId: ${runId}`);
     console.log(`browser: ${browser}`);
     console.log(`platform: ${platform}`);
+    console.log(`databaseUrl: ${databaseUrl}`);
+    console.log("testData:", JSON.stringify(testData, null, 2));
 
     await dbClient.$connect({ datasources: { db: { url: databaseUrl } } });
 

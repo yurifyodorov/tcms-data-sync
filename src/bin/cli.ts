@@ -21,10 +21,7 @@ console.log("🚀 Запуск tcms-test-runner...");
 console.log(`Используем браузер: ${browser}`);
 console.log(`Пути спецификаций: ${specPaths}`);
 
-// Запускаем тесты с переданными аргументами
-runTests(specPaths, browser);
-
-// Дополнительные операции
+runTests();
 saveBrowserDetails();
 saveSystemInfo();
 saveResults();

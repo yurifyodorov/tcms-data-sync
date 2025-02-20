@@ -1,3 +1,5 @@
+import { simplifyTestData } from './utils/simplifyTestData';
+
 const saveResults = (
     runId: string,
     browser: string,
@@ -8,7 +10,10 @@ const saveResults = (
     console.log(`runId: ${runId}`);
     console.log(`browser: ${browser}`);
     console.log(`platform: ${platform}`);
-    console.log("testData:", JSON.stringify(testData, null, 2));
+
+    const cleanedTestData = simplifyTestData(testData);
+
+    console.log("testData:", JSON.stringify(cleanedTestData, null, 2));
 
     console.log("✅ Функция saveResults выполнена успешно!");
 };

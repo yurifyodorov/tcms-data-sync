@@ -4,9 +4,6 @@
   "description": "NPM package for running tests",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
-  "bin": {
-    "tcms-test-runner": "dist/bin/cli.js"
-  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",

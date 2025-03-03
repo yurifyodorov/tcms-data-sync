@@ -2,6 +2,10 @@ import { dbClient } from './utils/db';
 import { Scenario } from "./types";
 
 export async function synchronizeScenarios(testData: Scenario[]): Promise<void> {
+    if (!dbClient) {
+        throw new Error('dbClient is not initialized.');
+    }
+
     const scenarioIdsFromTestData = testData.map((scenario) => scenario.id);
 
     const scenariosInDb = await dbClient.scenario.findMany();

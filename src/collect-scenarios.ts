@@ -2,6 +2,10 @@ import { TestData, ParsedScenario } from './types';
 import { dbClient } from './utils/db';
 
 const collectScenarios = async (testData: TestData): Promise<ParsedScenario[]> => {
+    if (!dbClient) {
+        throw new Error('dbClient is not initialized.');
+    }
+
     const featuresInDb = await dbClient.feature.findMany();
     const tagsInDb = await dbClient.tag.findMany();
 

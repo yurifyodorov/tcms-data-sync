@@ -2,6 +2,10 @@ import { dbClient } from './utils/db';
 import { Feature } from './types';
 
 export async function synchronizeFeatures(testData: Feature[]): Promise<void> {
+    if (!dbClient) {
+        throw new Error('dbClient is not initialized.');
+    }
+
     const featureNamesFromTestData = testData.map((feature: Feature) => feature.name.trim());
 
     const featuresInDb = await dbClient.feature.findMany();

@@ -3,6 +3,9 @@ import { TestData } from './types';
 import { collectTags } from "./collect-tags";
 
 export async function synchronizeTags(testData: TestData): Promise<void> {
+    if (!dbClient) {
+        throw new Error('dbClient is not initialized.');
+    }
 
     const tagsFromTests = collectTags(testData);
     const tagsSetFromTests = new Set<string>();

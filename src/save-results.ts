@@ -1,5 +1,6 @@
 import { createId } from './utils/id';
-import { dbClient } from './utils/db';
+import { getDbClient } from "./utils/db";
+
 
 import {
     TestData,
@@ -34,14 +35,14 @@ import { collectStepsResults } from './collect-steps-results';
 
 export const scenarioMap = new Map<string, string>();
 
-export async function saveResults(
+const saveResults = async (
     runId: string,
     browser: string,
     platform: string,
     environment: string,
     databaseUrl: string,
     testData: TestData
-): Promise<void> {
+): Promise<void> => {
 
     console.log(`
         Run ID: ${runId}, 
@@ -51,9 +52,7 @@ export async function saveResults(
         DB: ${databaseUrl}
     `);
 
-    // FIXME: передать databaseUrl в dbClient
-    // @ts-ignore
-    const db = dbClient(databaseUrl);
+    const dbClient = getDbClient(databaseUrl);
 
     await synchronizeTags(testData);
     await synchronizeFeatures(testData);
@@ -283,16 +282,16 @@ export async function saveResults(
         stepsToCreate.map(step => [`${step.name.trim().toLowerCase()}-${step.keyword.trim().toLowerCase()}`, step])
     ).values());
 
-    await db.$transaction([
-        db.tag.createMany({ data: tagsToCreate, skipDuplicates: true }),
-        db.feature.createMany({ data: featuresToCreate, skipDuplicates: true }),
-        db.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true }),
-        db.step.createMany({ data: uniqueSteps, skipDuplicates: true }),
-        db.scenarioStep.createMany({ data: scenarioStepsToCreate }),
-        db.featureTag.createMany({ data: featureTagsToCreate }),
-        db.scenarioTag.createMany({ data: scenarioTagsToCreate }),
+    await dbClient.$transaction([
+        dbClient.tag.createMany({ data: tagsToCreate, skipDuplicates: true }),
+        dbClient.feature.createMany({ data: featuresToCreate, skipDuplicates: true }),
+        dbClient.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true }),
+        dbClient.step.createMany({ data: uniqueSteps, skipDuplicates: true }),
+        dbClient.scenarioStep.createMany({ data: scenarioStepsToCreate }),
+        dbClient.featureTag.createMany({ data: featureTagsToCreate }),
+        dbClient.scenarioTag.createMany({ data: scenarioTagsToCreate }),
 
-        db.runFeature.createMany({
+        dbClient.runFeature.createMany({
             data: runFeaturesToCreate.map(item => ({
                 id: item.id,
                 featureId: item.featureId,
@@ -304,7 +303,7 @@ export async function saveResults(
             skipDuplicates: true
         }),
 
-        db.runScenario.createMany({
+        dbClient.runScenario.createMany({
             data: runScenariosToCreate.map(item => ({
                 id: item.id,
                 scenarioId: item.scenarioId,
@@ -316,7 +315,7 @@ export async function saveResults(
             skipDuplicates: true
         }),
 
-        db.runStep.createMany({
+        dbClient.runStep.createMany({
             data: runStepsToCreate.map(item => ({
                 id: item.id,
                 stepId: item.stepId,
@@ -331,13 +330,15 @@ export async function saveResults(
             skipDuplicates: true
         }),
 
-        db.run.update({
+        dbClient.run.update({
             where: { id: runId },
             data: { featuresCount, scenariosCount, passCount, failCount, skipCount, stepsCount, duration: runDuration },
         }),
     ]);
 
-    await db.$disconnect();
+    await dbClient.$disconnect();
 
     console.log("Data successfully saved!");
 }
+
+export { saveResults };

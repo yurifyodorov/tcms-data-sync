@@ -1,4 +1,4 @@
-import { saveResults } from "./resultsParser";
+import { saveResults } from "./save-results";
 import { sendSlackReport } from "./slackNotifier";
 
 const tcms = {

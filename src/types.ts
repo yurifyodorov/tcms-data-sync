@@ -1,38 +1,67 @@
 export interface Step {
-    arguments: any[];
-    keyword: string;
-    line: number;
+    id: string;
     name: string;
-    match: {
-        location: string;
-    };
+    media: string;
+    keyword: string;
+    scenarioIds: string[];
+}
+
+export interface StepResult extends Step {
     result: {
-        status: 'passed' | 'failed' | 'skipped';
+        status: string;
         duration: number;
-        error_message?: string;
     };
 }
 
-export interface Scenario {
-    description: string;
+export interface ParsedStep {
     id: string;
-    keyword: string;
-    line: number;
     name: string;
+    keyword: string;
+    scenarioIds: string[];
+    media: string;
+}
+
+export interface Scenario {
+    id: string;
+    featureId: string;
+    description: string;
+    keyword: string;
+    name: string;
+    tags: Tag[];
     steps: Step[];
-    tags: string[];
-    type: 'scenario';
+    type: string;
+}
+
+
+export interface ParsedScenario {
+    id: string;
+    featureId: string;
+    keyword: string;
+    name: string;
+    description: string;
+    tags?: { connect: { id: string }[] };
 }
 
 export interface Feature {
     description: string;
     elements: Scenario[];
     id: string;
-    line: number;
     keyword: string;
     name: string;
-    tags: string[];
-    uri: string;
+    tags: Tag[];
+}
+
+export interface ParsedFeature {
+    id: string;
+    name: string;
+    description: string;
+    keyword: string;
+    tags?: { connect: { id: string }[] };
+}
+
+export interface Tag {
+    id: string;
+    name: string;
 }
 
 export type TestData = Feature[];

@@ -1,5 +1,5 @@
-import { getDbClient} from './utils/db';
 import { TestData } from './types';
+import { getDbClient } from './utils/db';
 import { collectTags } from "./collect-tags";
 
 export async function synchronizeTags(testData: TestData, databaseUrl: string): Promise<void> {

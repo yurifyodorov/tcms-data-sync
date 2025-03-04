@@ -1,7 +1,6 @@
 import { createId } from './utils/id';
 import { getDbClient } from "./utils/db";
 
-
 import {
     TestData,
     ParsedFeature,
@@ -74,7 +73,14 @@ const saveResults = async (
     const stepResults = await collectStepsResults(testData);
     console.log("Collected Step Results:", stepResults);
 
-    let featuresCount = 0, scenariosCount = 0, passCount = 0, failCount = 0, skipCount = 0, stepsCount = 0;
+    let featuresCount = 0;
+    let scenariosCount = 0;
+    let stepsCount = 0;
+
+    let passCount = stepResults.filter(step => step.status === "passed").length;
+    let failCount = stepResults.filter(step => step.status === "failed").length;
+    let skipCount = stepResults.filter(step => step.status === "skipped").length;
+
     let status = 'completed', runDuration = 0;
 
     const featuresToCreate: ParsedFeature[] = [];
@@ -185,6 +191,7 @@ const saveResults = async (
                     stackTrace: null
                 });
 
+                stepsCount++;
                 scenarioDuration += stepResults[index].duration;
 
                 if (!stepsToCreate.some(s => s.id === stepData.id)) {
@@ -265,7 +272,7 @@ const saveResults = async (
     await dbClient.run.create({
         data: {
             id: runId, status, browser, platform, environment,
-            featuresCount, scenariosCount, passCount, failCount, skipCount, stepsCount,
+            featuresCount, scenariosCount, stepsCount, passCount, failCount, skipCount,
             auto: true, duration: runDuration,
         }
     });
@@ -335,7 +342,15 @@ const saveResults = async (
 
         dbClient.run.update({
             where: { id: runId },
-            data: { featuresCount, scenariosCount, passCount, failCount, skipCount, stepsCount, duration: runDuration },
+            data: {
+                featuresCount,
+                scenariosCount,
+                stepsCount,
+                passCount,
+                failCount,
+                skipCount,
+                duration: runDuration
+            },
         }),
     ]);
 

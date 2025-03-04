@@ -1,10 +1,8 @@
 import { ParsedStep, TestData } from './types';
-import { dbClient } from './utils/db';
+import { getDbClient } from './utils/db';
 
-const collectSteps = async (testData: TestData): Promise<ParsedStep[]> => {
-    if (!dbClient) {
-        throw new Error('dbClient is not initialized.');
-    }
+const collectSteps = async (testData: TestData, databaseUrl: string): Promise<ParsedStep[]> => {
+    const dbClient = getDbClient(databaseUrl);
 
     const stepsInDb = await dbClient.step.findMany();
     const allSteps: ParsedStep[] = [];

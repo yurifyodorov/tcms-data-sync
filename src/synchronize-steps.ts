@@ -1,10 +1,8 @@
-import { dbClient } from './utils/db';
+import { getDbClient } from './utils/db';
 import { Step } from "./types";
 
-export async function synchronizeSteps(testData: Step[]): Promise<void> {
-    if (!dbClient) {
-        throw new Error('dbClient is not initialized.');
-    }
+export async function synchronizeSteps(testData: Step[], databaseUrl: string): Promise<void> {
+    const dbClient = getDbClient(databaseUrl);
 
     const stepIdsFromTestData = testData.map((step) => step.id);
 

@@ -54,12 +54,12 @@ const saveResults = async (
 
     const dbClient = getDbClient(databaseUrl);
 
-    await synchronizeTags(testData);
-    await synchronizeFeatures(testData);
+    await synchronizeTags(testData, databaseUrl);
+    await synchronizeFeatures(testData, databaseUrl);
 
     const tags = collectTags(testData);
-    const features = await collectFeatures(testData);
-    const scenarios = await collectScenarios(testData);
+    const features = await collectFeatures(testData, databaseUrl);
+    const scenarios = await collectScenarios(testData, databaseUrl);
 
     testData.forEach((feature, featureIndex) => {
         feature.elements.forEach((scenario, scenarioIndex) => {
@@ -68,8 +68,8 @@ const saveResults = async (
         });
     });
 
-    const steps = await collectSteps(testData);
-    await synchronizeSteps(steps);
+    const steps = await collectSteps(testData, databaseUrl);
+    await synchronizeSteps(steps, databaseUrl);
 
     const stepResults = await collectStepsResults(testData);
     console.log("Collected Step Results:", stepResults);
@@ -243,12 +243,15 @@ const saveResults = async (
         });
     }
 
-    await synchronizeScenarios(scenariosToCreate.map(scenario => ({
-        ...scenario,
-        steps: [],
-        tags: [],
-        type: 'Scenario' as const
-    })));
+    await synchronizeScenarios(
+        scenariosToCreate.map(scenario => ({
+            ...scenario,
+            steps: [],
+            tags: [],
+            type: 'Scenario' as const
+        })),
+        databaseUrl
+    );
 
     // Handle failed status if necessary
     if (failCount > 0) {

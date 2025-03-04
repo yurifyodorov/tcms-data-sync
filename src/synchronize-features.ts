@@ -1,10 +1,8 @@
-import { dbClient } from './utils/db';
+import { getDbClient } from './utils/db';
 import { Feature } from './types';
 
-export async function synchronizeFeatures(testData: Feature[]): Promise<void> {
-    if (!dbClient) {
-        throw new Error('dbClient is not initialized.');
-    }
+export async function synchronizeFeatures(testData: Feature[], databaseUrl: string): Promise<void> {
+    const dbClient = getDbClient(databaseUrl);
 
     const featureNamesFromTestData = testData.map((feature: Feature) => feature.name.trim());
 

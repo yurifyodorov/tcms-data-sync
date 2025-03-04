@@ -1,10 +1,8 @@
-import { dbClient } from './utils/db';
+import { getDbClient } from './utils/db';
 import { Scenario } from "./types";
 
-export async function synchronizeScenarios(testData: Scenario[]): Promise<void> {
-    if (!dbClient) {
-        throw new Error('dbClient is not initialized.');
-    }
+export async function synchronizeScenarios(testData: Scenario[], databaseUrl: string): Promise<void> {
+    const dbClient = getDbClient(databaseUrl);
 
     const scenarioIdsFromTestData = testData.map((scenario) => scenario.id);
 

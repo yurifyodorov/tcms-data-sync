@@ -1,10 +1,8 @@
 import { TestData, ParsedScenario } from './types';
-import { dbClient } from './utils/db';
+import { getDbClient } from './utils/db';
 
-const collectScenarios = async (testData: TestData): Promise<ParsedScenario[]> => {
-    if (!dbClient) {
-        throw new Error('dbClient is not initialized.');
-    }
+const collectScenarios = async (testData: TestData, databaseUrl: string): Promise<ParsedScenario[]> => {
+    const dbClient = getDbClient(databaseUrl);
 
     const featuresInDb = await dbClient.feature.findMany();
     const tagsInDb = await dbClient.tag.findMany();

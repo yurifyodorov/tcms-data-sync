@@ -1,12 +1,21 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
-export function getDbClient(databaseUrl: string): PrismaClient {
-    process.env.DATABASE_URL = databaseUrl;
-    return new PrismaClient();
-}
+let dbClient: PrismaClient | null = null;
 
-export let dbClient: PrismaClient | null = null;
+export const getDbClient = (databaseUrl?: string): PrismaClient => {
+    if (!dbClient) {
+        if (!databaseUrl) {
+            throw new Error("databaseUrl is not provided");
+        }
 
-export function setDbClient(databaseUrl: string) {
-    dbClient = getDbClient(databaseUrl);
-}
+        dbClient = new PrismaClient({
+            datasources: {
+                db: {
+                    url: databaseUrl,
+                },
+            },
+        });
+    }
+
+    return dbClient;
+};

@@ -1,4 +1,4 @@
-# tcms-test-runner
+# @yurifyodorov/tcms-data-sync
 
 A script for running tests and saving results to a database.
 
@@ -7,4 +7,4 @@ A script for running tests and saving results to a database.
 To install the package, run the following command:
 
 ```bash
-npm install @yurifyodorov/tcms-test-runner
+npm install @yurifyodorov/tcms-data-sync

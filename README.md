@@ -1,6 +1,5 @@
-# @yurifyodorov/tcms-data-sync
-
-A script for running tests and saving results to a database.
+# tcms-data-sync
+Script for sync test cases with database.
 
 ## Installation
 

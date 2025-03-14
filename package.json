@@ -1,6 +1,6 @@
 {
   "name": "@yurifyodorov/tcms-data-sync",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "NPM package for processing and syncing test data to TCMS",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",

@@ -43,12 +43,17 @@ const saveResults = async (
     testData: TestData
 ): Promise<void> => {
 
+    const maskString = (str: string) => {
+        if (str.length <= 8) return '*'.repeat(str.length);
+        return str.slice(0, 12) + '*'.repeat(12) + str.slice(-12);
+    };
+
     console.log(`
         Run ID: ${runId}, 
         Browser: ${browser}, 
         Platform: ${platform}, 
         Env: ${environment}, 
-        DB: ${databaseUrl}
+        DB: ${maskString(databaseUrl)}
     `);
 
     const dbClient = getDbClient(databaseUrl);
@@ -62,7 +67,14 @@ const saveResults = async (
 
     testData.forEach((feature, featureIndex) => {
         feature.elements.forEach((scenario, scenarioIndex) => {
-            const scenarioId = scenarios[featureIndex * feature.elements.length + scenarioIndex].id;
+            const scenarioData = scenarios[featureIndex * feature.elements.length + scenarioIndex];
+
+            // if (!scenarioData) {
+            //     console.error(`❌ Ошибка: сценарий ${scenario.name} не найден в collectScenarios`);
+            //     return;
+            // }
+
+            const scenarioId = scenarioData.id;
             scenarioMap.set(scenario.id, scenarioId);
         });
     });
@@ -71,7 +83,7 @@ const saveResults = async (
     await synchronizeSteps(steps, databaseUrl);
 
     const stepResults = await collectStepsResults(testData);
-    console.log("Collected Step Results:", stepResults);
+    // console.log("Collected Step Results:", stepResults);
 
     let featuresCount = 0;
     let scenariosCount = 0;
@@ -81,7 +93,8 @@ const saveResults = async (
     let failCount = stepResults.filter(step => step.status === "failed").length;
     let skipCount = stepResults.filter(step => step.status === "skipped").length;
 
-    let status = 'completed', runDuration = 0;
+    let status = 'completed';
+    let duration = stepResults.reduce((total, step) => total + step.duration, 0);
 
     const featuresToCreate: ParsedFeature[] = [];
     const scenariosToCreate: ParsedScenario[] = [];
@@ -99,6 +112,8 @@ const saveResults = async (
 
     const tagsInDb = await dbClient.tag.findMany();
     const tagMap = new Map(tagsInDb.map(tag => [tag.name.trim(), tag.id]));
+
+    console.log("Теги в БД:", tagMap);
 
     for (const feature of features) {
         featuresCount++;
@@ -162,10 +177,20 @@ const saveResults = async (
             for (const tag of scenario.tags || []) {
                 let tagId = tagMap.get(tag.name.trim());
                 if (!tagId) {
-                    tagId = (await dbClient.tag.create({ data: { name: tag.name.trim() } })).id;
+                    const newTag = await dbClient.tag.create({ data: { name: tag.name.trim() } });
+                    if (!newTag || !newTag.id) {
+                        console.error(`❌ Ошибка: Не удалось создать тег "${tag.name}"`);
+                        continue;
+                    }
+                    tagId = newTag.id;
                     tagMap.set(tag.name.trim(), tagId);
                 }
-                scenarioTagsToCreate.push({ scenarioId, tagId });
+
+                if (tagId) {
+                    scenarioTagsToCreate.push({ scenarioId, tagId });
+                } else {
+                    console.warn(`⚠️ Ошибка: Не найден ID для тега "${tag.name}"`);
+                }
             }
 
             for (const [index, step] of scenario.steps.entries()) {
@@ -173,7 +198,7 @@ const saveResults = async (
                 const stepData = steps.find(s => s.name.trim().toLowerCase() === stepName);
 
                 if (!stepData) {
-                    console.error(`Step "${step.name}" not found in steps`);
+                    console.error(`⚠️ Ошибка: Шаг "${step.name}" не найден в collectSteps.`);
                     continue;
                 }
 
@@ -184,31 +209,30 @@ const saveResults = async (
                     stepId: stepData.id,
                     scenarioId,
                     runId,
-                    status: stepResults[index].status as Status,
-                    duration: stepResults[index].duration,
+                    status: stepResults[index]?.status as Status ?? "unknown",
+                    duration: stepResults[index]?.duration ?? 0,
                     createdAt: new Date(),
                     errorMessage: null,
                     stackTrace: null
                 });
 
                 stepsCount++;
-                scenarioDuration += stepResults[index].duration;
+                scenarioDuration += stepResults[index]?.duration ?? 0;
 
                 if (!stepsToCreate.some(s => s.id === stepData.id)) {
                     stepsToCreate.push({
                         id: stepData.id,
-                        scenarioIds: stepData.scenarioIds,
                         keyword: stepData.keyword,
                         name: stepData.name,
                         media: stepData.media
                     });
                 }
 
-                if (stepResults[index].status === 'failed') {
+                if (stepResults[index]?.status === 'failed') {
                     scenarioStatus = 'failed';
                 }
 
-                if (stepResults[index].status === 'skipped' && scenarioStatus !== 'failed') {
+                if (stepResults[index]?.status === 'skipped' && scenarioStatus !== 'failed') {
                     scenarioStatus = 'skipped';
                 }
             }
@@ -273,7 +297,7 @@ const saveResults = async (
         data: {
             id: runId, status, browser, platform, environment,
             featuresCount, scenariosCount, stepsCount, passCount, failCount, skipCount,
-            auto: true, duration: runDuration,
+            auto: true, duration,
         }
     });
 
@@ -286,7 +310,7 @@ const saveResults = async (
     // console.log("scenarioTagsToCreate:", JSON.stringify(scenarioTagsToCreate, null, 2));
     // console.log("runFeaturesToCreate:", JSON.stringify(runFeaturesToCreate, null, 2));
     // console.log("runScenariosToCreate:", JSON.stringify(runScenariosToCreat, null, 2));
-    console.log("runStepsToCreate:", JSON.stringify(runStepsToCreate, null, 2));
+    // console.log("runStepsToCreate:", JSON.stringify(runStepsToCreate, null, 2));
 
     const uniqueSteps = Array.from(new Map(
         stepsToCreate.map(step => [`${step.name.trim().toLowerCase()}-${step.keyword.trim().toLowerCase()}`, step])
@@ -297,9 +321,9 @@ const saveResults = async (
         dbClient.feature.createMany({ data: featuresToCreate, skipDuplicates: true }),
         dbClient.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true }),
         dbClient.step.createMany({ data: uniqueSteps, skipDuplicates: true }),
-        dbClient.scenarioStep.createMany({ data: scenarioStepsToCreate }),
-        dbClient.featureTag.createMany({ data: featureTagsToCreate }),
-        dbClient.scenarioTag.createMany({ data: scenarioTagsToCreate }),
+        dbClient.scenarioStep.createMany({ data: scenarioStepsToCreate, skipDuplicates: true }),
+        dbClient.featureTag.createMany({ data: featureTagsToCreate, skipDuplicates: true }),
+        dbClient.scenarioTag.createMany({ data: scenarioTagsToCreate, skipDuplicates: true }),
 
         dbClient.runFeature.createMany({
             data: runFeaturesToCreate.map(item => ({
@@ -349,7 +373,7 @@ const saveResults = async (
                 passCount,
                 failCount,
                 skipCount,
-                duration: runDuration
+                duration
             },
         }),
     ]);

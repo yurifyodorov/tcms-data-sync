@@ -6,6 +6,7 @@
   "types": "dist/types/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "patch": "npm version patch",
     "publish": "npm publish --access public"
   },
   "dependencies": {

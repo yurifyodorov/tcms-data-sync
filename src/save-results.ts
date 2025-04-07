@@ -102,7 +102,6 @@ const saveResults = async (
     await synchronizeSteps(steps, databaseUrl);
 
     const stepResults = await collectStepsResults(testData);
-    console.log("Collected Step Results:", JSON.stringify(stepResults, null, 2));
 
     let featuresCount = 0;
     let scenariosCount = 0;
@@ -192,7 +191,7 @@ const saveResults = async (
 
         featuresToCreate.push({ id: featureId, keyword: feature.keyword, name: feature.name, description: featureDescription });
 
-        let featureStatus: Status = 'passed'; // Assume passed unless any scenario fails
+        let featureStatus: Status = 'passed';
 
         runFeaturesToCreate.push({
             id: createId(),
@@ -324,7 +323,7 @@ const saveResults = async (
             id: createId(),
             featureId,
             runId: runId,
-            status: featureStatus, // Set the final status for the feature
+            status: featureStatus,
             duration: 0,
             createdAt: new Date()
         });

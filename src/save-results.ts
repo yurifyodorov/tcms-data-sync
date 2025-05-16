@@ -359,8 +359,8 @@ const saveResults = async (
     // console.log("featureTagsToCreate:", JSON.stringify(featureTagsToCreate, null, 2));
     // console.log("scenarioTagsToCreate:", JSON.stringify(scenarioTagsToCreate, null, 2));
     // console.log("runFeaturesToCreate:", JSON.stringify(runFeaturesToCreate, null, 2));
-    // console.log("runScenariosToCreate:", JSON.stringify(runScenariosToCreat, null, 2));
-    // console.log("runStepsToCreate:", JSON.stringify(runStepsToCreate, null, 2));
+    console.log("runScenariosToCreate:", JSON.stringify(runScenariosToCreate, null, 2));
+    console.log("runStepsToCreate:", JSON.stringify(runStepsToCreate, null, 2));
 
     const uniqueSteps = Array.from(new Map(
         stepsToCreate.map(step => [`${step.name.trim().toLowerCase()}-${step.keyword.trim().toLowerCase()}`, step])

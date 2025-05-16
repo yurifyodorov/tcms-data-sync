@@ -173,6 +173,7 @@ enum Status {
   retest
   skipped
   untested
+  undefined
 }
 
 model MapNode {

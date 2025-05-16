@@ -193,15 +193,6 @@ const saveResults = async (
 
         let featureStatus: Status = 'passed';
 
-        runFeaturesToCreate.push({
-            id: createId(),
-            featureId,
-            runId: runId,
-            status: featureStatus,
-            duration: 0,
-            createdAt: new Date()
-        });
-
         for (const tagId of featureTags) {
             featureTagsToCreate.push({ featureId, tagId });
         }
@@ -318,13 +309,17 @@ const saveResults = async (
             featureStatus = 'passed';
         }
 
+        const featureScenariosDuration = runScenariosToCreate
+            .filter(rs => rs.scenarioId && scenariosToCreate.find(s => s.id === rs.scenarioId)?.featureId === featureId)
+            .reduce((sum, rs) => sum + (rs.duration ?? 0), 0);
+
         // Update runFeature status after processing all scenarios
         runFeaturesToCreate.push({
             id: createId(),
             featureId,
             runId: runId,
             status: featureStatus,
-            duration: 0,
+            duration: featureScenariosDuration,
             createdAt: new Date()
         });
     }

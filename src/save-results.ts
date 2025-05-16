@@ -366,60 +366,69 @@ const saveResults = async (
         stepsToCreate.map(step => [`${step.name.trim().toLowerCase()}-${step.keyword.trim().toLowerCase()}`, step])
     ).values());
 
-    await dbClient.$transaction(async (tx) => {
-        console.log("📌 Сохраняем теги...");
-        await tx.tag.createMany({ data: tagsToCreate, skipDuplicates: true });
+    try {
+        await dbClient.$transaction(async (tx) => {
+            console.log("📌 Сохраняем теги...");
+            await tx.tag.createMany({ data: tagsToCreate, skipDuplicates: true });
 
-        console.log("📌 Сохраняем фичи...");
-        await tx.feature.createMany({ data: featuresToCreate, skipDuplicates: true });
+            console.log("📌 Сохраняем фичи...");
+            await tx.feature.createMany({ data: featuresToCreate, skipDuplicates: true });
 
-        console.log("📌 Сохраняем сценарии...");
-        await tx.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true });
+            console.log("📌 Сохраняем сценарии...");
+            await tx.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true });
 
-        console.log("📌 Сохраняем шаги...");
-        await tx.step.createMany({ data: uniqueSteps, skipDuplicates: true });
+            console.log("📌 Сохраняем шаги...");
+            await tx.step.createMany({ data: uniqueSteps, skipDuplicates: true });
 
-        console.log("📌 Сохраняем связи сценарий-шаг...");
-        await tx.scenarioStep.createMany({ data: scenarioStepsToCreate, skipDuplicates: true });
+            console.log("📌 Сохраняем связи сценарий-шаг...");
+            await tx.scenarioStep.createMany({ data: scenarioStepsToCreate, skipDuplicates: true });
 
-        console.log("📌 Сохраняем связи фича-тег...");
-        await tx.featureTag.createMany({ data: featureTagsToCreate, skipDuplicates: true });
+            console.log("📌 Сохраняем связи фича-тег...");
+            await tx.featureTag.createMany({ data: featureTagsToCreate, skipDuplicates: true });
 
-        console.log("📌 Сохраняем связи сценарий-тег...");
-        await tx.scenarioTag.createMany({ data: scenarioTagsToCreate, skipDuplicates: true });
+            console.log("📌 Сохраняем связи сценарий-тег...");
+            await tx.scenarioTag.createMany({ data: scenarioTagsToCreate, skipDuplicates: true });
 
-        console.log("📌 Сохраняем результаты фич...");
-        await tx.runFeature.createMany({
-            data: runFeaturesToCreate,
-            skipDuplicates: true
+            console.log("📌 Сохраняем результаты фич...");
+            await tx.runFeature.createMany({
+                data: runFeaturesToCreate,
+                skipDuplicates: true
+            });
+
+            console.log("📌 Сохраняем результаты сценариев...");
+            await tx.runScenario.createMany({
+                data: runScenariosToCreate,
+                skipDuplicates: true
+            });
+
+            console.log("📌 Сохраняем результаты шагов...");
+            await tx.runStep.createMany({
+                data: runStepsToCreate,
+                skipDuplicates: true
+            });
+
+            console.log("📌 Обновляем данные о запуске...");
+            await tx.run.update({
+                where: { id: runId },
+                data: {
+                    featuresCount,
+                    scenariosCount,
+                    stepsCount,
+                    passCount,
+                    failCount,
+                    skipCount,
+                    duration
+                },
+            });
         });
 
-        console.log("📌 Сохраняем результаты сценариев...");
-        await tx.runScenario.createMany({
-            data: runScenariosToCreate,
-            skipDuplicates: true
-        });
-
-        console.log("📌 Сохраняем результаты шагов...");
-        await tx.runStep.createMany({
-            data: runStepsToCreate,
-            skipDuplicates: true
-        });
-
-        console.log("📌 Обновляем данные о запуске...");
-        await tx.run.update({
-            where: { id: runId },
-            data: {
-                featuresCount,
-                scenariosCount,
-                stepsCount,
-                passCount,
-                failCount,
-                skipCount,
-                duration
-            },
-        });
-    });
+        console.log("✅ Данные успешно сохранены в базе.");
+    } catch (error) {
+        console.error("❌ Ошибка при сохранении данных в транзакции:", error);
+        // Можно сюда добавить дополнительные действия, например:
+        // - отправить ошибку в систему мониторинга
+        // - вызвать process.exit(1), если нужно остановить процесс
+    }
 
     await dbClient.$disconnect();
 

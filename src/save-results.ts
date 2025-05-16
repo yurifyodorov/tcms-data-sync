@@ -359,62 +359,55 @@ const saveResults = async (
     // console.log("featureTagsToCreate:", JSON.stringify(featureTagsToCreate, null, 2));
     // console.log("scenarioTagsToCreate:", JSON.stringify(scenarioTagsToCreate, null, 2));
     // console.log("runFeaturesToCreate:", JSON.stringify(runFeaturesToCreate, null, 2));
-    console.log("runScenariosToCreate:", JSON.stringify(runScenariosToCreate, null, 2));
-    console.log("runStepsToCreate:", JSON.stringify(runStepsToCreate, null, 2));
+    // console.log("runScenariosToCreate:", JSON.stringify(runScenariosToCreate, null, 2));
+    // console.log("runStepsToCreate:", JSON.stringify(runStepsToCreate, null, 2));
 
     const uniqueSteps = Array.from(new Map(
         stepsToCreate.map(step => [`${step.name.trim().toLowerCase()}-${step.keyword.trim().toLowerCase()}`, step])
     ).values());
 
-    await dbClient.$transaction([
-        dbClient.tag.createMany({ data: tagsToCreate, skipDuplicates: true }),
-        dbClient.feature.createMany({ data: featuresToCreate, skipDuplicates: true }),
-        dbClient.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true }),
-        dbClient.step.createMany({ data: uniqueSteps, skipDuplicates: true }),
-        dbClient.scenarioStep.createMany({ data: scenarioStepsToCreate, skipDuplicates: true }),
-        dbClient.featureTag.createMany({ data: featureTagsToCreate, skipDuplicates: true }),
-        dbClient.scenarioTag.createMany({ data: scenarioTagsToCreate, skipDuplicates: true }),
+    await dbClient.$transaction(async (tx) => {
+        console.log("📌 Сохраняем теги...");
+        await tx.tag.createMany({ data: tagsToCreate, skipDuplicates: true });
 
-        dbClient.runFeature.createMany({
-            data: runFeaturesToCreate.map(item => ({
-                id: item.id,
-                featureId: item.featureId,
-                runId: item.runId,
-                status: item.status as Status,
-                duration: item.duration,
-                createdAt: item.createdAt,
-            })),
+        console.log("📌 Сохраняем фичи...");
+        await tx.feature.createMany({ data: featuresToCreate, skipDuplicates: true });
+
+        console.log("📌 Сохраняем сценарии...");
+        await tx.scenario.createMany({ data: scenariosToCreate, skipDuplicates: true });
+
+        console.log("📌 Сохраняем шаги...");
+        await tx.step.createMany({ data: uniqueSteps, skipDuplicates: true });
+
+        console.log("📌 Сохраняем связи сценарий-шаг...");
+        await tx.scenarioStep.createMany({ data: scenarioStepsToCreate, skipDuplicates: true });
+
+        console.log("📌 Сохраняем связи фича-тег...");
+        await tx.featureTag.createMany({ data: featureTagsToCreate, skipDuplicates: true });
+
+        console.log("📌 Сохраняем связи сценарий-тег...");
+        await tx.scenarioTag.createMany({ data: scenarioTagsToCreate, skipDuplicates: true });
+
+        console.log("📌 Сохраняем результаты фич...");
+        await tx.runFeature.createMany({
+            data: runFeaturesToCreate,
             skipDuplicates: true
-        }),
+        });
 
-        dbClient.runScenario.createMany({
-            data: runScenariosToCreate.map(item => ({
-                id: item.id,
-                scenarioId: item.scenarioId,
-                runId: item.runId,
-                status: item.status as Status,
-                duration: item.duration,
-                createdAt: item.createdAt,
-            })),
+        console.log("📌 Сохраняем результаты сценариев...");
+        await tx.runScenario.createMany({
+            data: runScenariosToCreate,
             skipDuplicates: true
-        }),
+        });
 
-        dbClient.runStep.createMany({
-            data: runStepsToCreate.map(item => ({
-                id: item.id,
-                stepId: item.stepId,
-                scenarioId: item.scenarioId,
-                runId: item.runId,
-                status: item.status as Status,
-                duration: item.duration,
-                createdAt: item.createdAt,
-                errorMessage: item.errorMessage,
-                stackTrace: item.stackTrace,
-            })),
+        console.log("📌 Сохраняем результаты шагов...");
+        await tx.runStep.createMany({
+            data: runStepsToCreate,
             skipDuplicates: true
-        }),
+        });
 
-        dbClient.run.update({
+        console.log("📌 Обновляем данные о запуске...");
+        await tx.run.update({
             where: { id: runId },
             data: {
                 featuresCount,
@@ -425,8 +418,8 @@ const saveResults = async (
                 skipCount,
                 duration
             },
-        }),
-    ]);
+        });
+    });
 
     await dbClient.$disconnect();
 

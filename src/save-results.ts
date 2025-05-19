@@ -110,7 +110,7 @@ const saveResults = async (
     let passCount = 0;
     let failCount = 0;
     let skipCount = 0;
-    let status = 'completed';
+    let status = 'passed';
     let duration = 0;
     let totalScenarios = 0;
 
@@ -145,7 +145,7 @@ const saveResults = async (
     }
 
     if (status !== 'failed') {
-        status = 'completed';
+        status = 'passed';
     }
 
     const featuresToCreate: ParsedFeature[] = [];

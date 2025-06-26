@@ -133,11 +133,12 @@ model Step {
 model ScenarioStep {
   scenarioId String
   stepId     String
+  keyword    String
 
   scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
   step     Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
 
-  @@id([scenarioId, stepId])
+  @@id([scenarioId, stepId, keyword])
   @@map("scenario_steps")
 }
 

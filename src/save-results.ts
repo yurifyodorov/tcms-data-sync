@@ -7,7 +7,7 @@ import { collectScenarios } from './collect-scenarios';
 import { collectStepsResults } from './collect-steps-results';
 
 const saveResults = async (
-    dbClient: PrismaClient, // ✅ передаём готовый клиент
+    dbClient: PrismaClient,
     runId: string,
     browser: string,
     platform: string,
@@ -20,7 +20,7 @@ const saveResults = async (
         return;
     }
 
-    const stepResults = await collectStepsResults(testData); // если нужно — тоже передаём dbClient
+    const stepResults = await collectStepsResults(testData);
 
     const allSteps = await dbClient.step.findMany({
         select: { id: true, contentHash: true },

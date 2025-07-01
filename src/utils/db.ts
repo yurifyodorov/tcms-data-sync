@@ -1,24 +1,30 @@
 import { PrismaClient } from "../../prisma-client";
 
-let dbClient: PrismaClient | null = null;
+declare global {
+    // eslint-disable-next-line no-var
+    var __dbClient: PrismaClient | undefined;
+}
 
-/**
- * Возвращает singleton PrismaClient
- * с поддержкой передачи databaseUrl
- */
+let dbClient: PrismaClient;
 
 export const getDbClient = (databaseUrl?: string): PrismaClient => {
-    if (!dbClient) {
-        if (!databaseUrl) {
-            throw new Error("databaseUrl is not provided");
-        }
-        dbClient = new PrismaClient({
-            datasources: {
-                db: {
-                    url: databaseUrl,
-                },
-            },
-        });
+    if (global.__dbClient) {
+        return global.__dbClient;
     }
+
+    if (!databaseUrl) {
+        throw new Error("databaseUrl is not provided");
+    }
+
+    dbClient = new PrismaClient({
+        datasources: {
+            db: {
+                url: databaseUrl,
+            },
+        },
+    });
+
+    global.__dbClient = dbClient;
+
     return dbClient;
 };

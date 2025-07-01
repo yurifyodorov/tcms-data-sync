@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../../../prisma-clients/tcms-data-sync"
 }
 
 datasource db {

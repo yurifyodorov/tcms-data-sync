@@ -10,13 +10,15 @@
     "publish": "npm publish --access public",
     "generate": "prisma generate"
   },
+  "peerDependencies": {
+    "@prisma/client": "^6.4.1"
+  },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
-    "@prisma/client": "^6.4.1",
-    "axios": "^1.8.2",
-    "prisma": "^6.4.1"
+    "axios": "^1.8.2"
   },
   "devDependencies": {
+    "prisma": "^6.4.1",
     "@types/node": "^22.13.4",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.0"

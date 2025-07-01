@@ -1,8 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { PrismaClient } from "../../../prisma-clients/tcms-data-sync";
+import { PrismaClient } from "@prisma/client";
 
 let dbClient: PrismaClient | null = null;
+
+/**
+ * Возвращает singleton PrismaClient
+ * с поддержкой передачи databaseUrl
+ */
 
 export const getDbClient = (databaseUrl?: string): PrismaClient => {
     if (!dbClient) {

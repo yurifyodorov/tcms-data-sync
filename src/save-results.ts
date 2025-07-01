@@ -1,43 +1,26 @@
 import { createId } from './utils/id';
-import { getDbClient } from "./utils/db";
-
 import { TestData } from "./types";
 
-import { Prisma, Status, RunStep, RunScenario, RunFeature } from "../prisma-client";
+import { PrismaClient, Prisma, Status, RunStep, RunScenario, RunFeature } from "../prisma-client";
 
 import { collectScenarios } from './collect-scenarios';
 import { collectStepsResults } from './collect-steps-results';
 
 const saveResults = async (
+    dbClient: PrismaClient, // ✅ передаём готовый клиент
     runId: string,
     browser: string,
     platform: string,
     environment: string,
-    databaseUrl: string,
     testData: TestData
 ): Promise<void> => {
-    const maskString = (str: string) => {
-        if (str.length <= 8) return '*'.repeat(str.length);
-        return str.slice(0, 12) + '*'.repeat(12) + str.slice(-12);
-    };
-
-    console.log(`
-    Run ID: ${runId}, 
-    Browser: ${browser}, 
-    Platform: ${platform}, 
-    Env: ${environment}, 
-    DB: ${maskString(databaseUrl)}
-  `);
-
-    const dbClient = getDbClient(databaseUrl);
-
-    const scenarios = await collectScenarios(testData, databaseUrl);
+    const scenarios = await collectScenarios(testData, dbClient);
     if (!scenarios) {
         console.error("❌ Ошибка: collectScenarios вернул undefined");
         return;
     }
 
-    const stepResults = await collectStepsResults(testData);
+    const stepResults = await collectStepsResults(testData); // если нужно — тоже передаём dbClient
 
     const allSteps = await dbClient.step.findMany({
         select: { id: true, contentHash: true },
@@ -174,19 +157,10 @@ const saveResults = async (
 
     try {
         await dbClient.$transaction(async (tx: Prisma.TransactionClient) => {
-            console.log("📌 Сохраняем результаты фич...");
-            console.log("runFeaturesToCreate:", runFeaturesToCreate);
             await tx.runFeature.createMany({ data: runFeaturesToCreate, skipDuplicates: true });
-
-            console.log("📌 Сохраняем результаты сценариев...");
-            console.log("runScenariosToCreate:", runScenariosToCreate);
             await tx.runScenario.createMany({ data: runScenariosToCreate, skipDuplicates: true });
-
-            console.log("📌 Сохраняем результаты шагов...");
-            console.log("runStepsToCreate:", runStepsToCreate);
             await tx.runStep.createMany({ data: runStepsToCreate, skipDuplicates: true });
 
-            console.log("📌 Обновляем данные о запуске...");
             await tx.run.update({
                 where: { id: runId },
                 data: {
@@ -205,8 +179,6 @@ const saveResults = async (
     } catch (error) {
         console.error("❌ Ошибка при сохранении данных в транзакции:", error);
     }
-
-    await dbClient.$disconnect();
 
     console.log("Data successfully saved!");
 };

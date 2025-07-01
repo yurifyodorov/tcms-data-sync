@@ -1,10 +1,10 @@
 import { TestData, ParsedScenario } from './types';
-import type { Feature, Tag } from "../prisma-client";
+import type { Feature, Tag, PrismaClient } from "../prisma-client";
 
-import { getDbClient } from './utils/db';
-
-const collectScenarios = async (testData: TestData, databaseUrl: string): Promise<ParsedScenario[]> => {
-    const dbClient = getDbClient(databaseUrl);
+const collectScenarios = async (
+    testData: TestData,
+    dbClient: PrismaClient
+): Promise<ParsedScenario[]> => {
 
     console.log('dbClient keys:', Object.keys(dbClient));
 

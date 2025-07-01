@@ -13,13 +13,6 @@ export interface StepResult extends Step {
     };
 }
 
-export interface ParsedStep {
-    id: string;
-    name: string;
-    keyword: string;
-    media: string;
-}
-
 export interface Scenario {
     id: string;
     featureId: string;
@@ -50,13 +43,6 @@ export interface Feature {
     tags: Tag[];
 }
 
-export interface ParsedFeature {
-    id: string;
-    name: string;
-    description: string;
-    keyword: string;
-    tags?: { connect: { id: string }[] };
-}
 
 export interface Tag {
     id: string;

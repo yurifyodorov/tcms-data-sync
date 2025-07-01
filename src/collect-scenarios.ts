@@ -6,8 +6,8 @@ import { getDbClient } from './utils/db';
 const collectScenarios = async (testData: TestData, databaseUrl: string): Promise<ParsedScenario[]> => {
     const dbClient = getDbClient(databaseUrl);
 
-    const featuresInDb = await dbClient.feature.findMany();
-    const tagsInDb = await dbClient.tag.findMany();
+    const featuresInDb = await dbClient.Feature.findMany();
+    const tagsInDb = await dbClient.Tag.findMany();
 
     const tagMap = new Map<string, string>();
     tagsInDb.forEach((tag: Tag) => tagMap.set(tag.name.trim(), tag.id));

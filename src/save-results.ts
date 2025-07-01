@@ -39,6 +39,13 @@ const saveResults = async (
 
     const stepResults = await collectStepsResults(testData);
 
+    const allSteps = await dbClient.step.findMany({
+        select: { id: true, contentHash: true },
+        where: { active: true },
+    });
+
+    const stepHashMap = new Map(allSteps.map(step => [step.contentHash!, step.id]));
+
     let featuresCount = 0;
     let scenariosCount = 0;
     let stepsCount = 0;
@@ -91,9 +98,15 @@ const saveResults = async (
                 scenarioSkipped = false;
             }
 
+            const stepId = stepHashMap.get(stepResult.contentHash);
+            if (!stepId) {
+                console.warn(`⚠️ Шаг с contentHash ${stepResult.contentHash} не найден в базе`);
+                continue;
+            }
+
             runStepsToCreate.push({
                 id: createId(),
-                stepId: 'unknown', // Или заменить логикой поиска по collectSteps, если потребуется
+                stepId,
                 scenarioId,
                 runId,
                 status: stepStatus,

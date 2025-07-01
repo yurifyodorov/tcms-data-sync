@@ -3,6 +3,7 @@ export interface Step {
     name: string;
     media: string;
     keyword: string;
+    contentHash: string;
 }
 
 export interface StepResult extends Step {

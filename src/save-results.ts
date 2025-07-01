@@ -169,12 +169,15 @@ const saveResults = async (
     try {
         await dbClient.$transaction(async (tx) => {
             console.log("📌 Сохраняем результаты фич...");
+            console.log("runFeaturesToCreate:", runFeaturesToCreate);
             await tx.runFeature.createMany({ data: runFeaturesToCreate, skipDuplicates: true });
 
             console.log("📌 Сохраняем результаты сценариев...");
+            console.log("runScenariosToCreate:", runScenariosToCreate);
             await tx.runScenario.createMany({ data: runScenariosToCreate, skipDuplicates: true });
 
             console.log("📌 Сохраняем результаты шагов...");
+            console.log("runStepsToCreate:", runStepsToCreate);
             await tx.runStep.createMany({ data: runStepsToCreate, skipDuplicates: true });
 
             console.log("📌 Обновляем данные о запуске...");

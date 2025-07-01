@@ -7,8 +7,8 @@ const collectScenarios = async (testData: TestData, databaseUrl: string): Promis
     const dbClient = getDbClient(databaseUrl);
 
     console.log('dbClient keys:', Object.keys(dbClient));
-    console.log('dbClient.Feature:', dbClient.Feature);
-    console.log('dbClient.Tag:', dbClient.Tag);
+    console.log('dbClient.feature:', dbClient.feature);
+    console.log('dbClient.tag:', dbClient.tag);
 
     const featuresInDb = await dbClient.feature.findMany();
     const tagsInDb = await dbClient.tag.findMany();

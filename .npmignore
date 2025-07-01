@@ -2,9 +2,6 @@
 src/
 prisma/
 
-# исключаем сгенерированные клиенты
-prisma-clients/
-
 # исключаем тесты
 tests/
 __tests__/

@@ -9,7 +9,12 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationDir": "./dist/types",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "prisma-clients/tcms-data-sync": ["prisma-clients/tcms-data-sync"]
+    }
   },
   "include": ["src/**/*.ts"]
 }

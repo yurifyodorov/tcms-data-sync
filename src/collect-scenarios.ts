@@ -1,5 +1,5 @@
 import { TestData, ParsedScenario } from './types';
-import type { Feature, Tag } from '../../../prisma-clients/tcms-data-sync';
+import type { Feature, Tag } from "../prisma-client";
 
 import { getDbClient } from './utils/db';
 
@@ -8,7 +8,12 @@ const collectScenarios = async (testData: TestData, databaseUrl: string): Promis
 
     console.log('dbClient keys:', Object.keys(dbClient));
 
-    console.log('Available models in dbClient:', Object.keys(dbClient).filter(k => typeof dbClient[k] === 'object' && dbClient[k].findMany));
+    const availableModels = Object.keys(dbClient).filter(k => {
+        const val = (dbClient as any)[k];
+        return val && typeof val === 'object' && typeof val.findMany === 'function';
+    });
+
+    console.log('Available models in dbClient:', availableModels);
 
     console.log('dbClient.feature:', dbClient.feature);
     console.log('dbClient.tag:', dbClient.tag);

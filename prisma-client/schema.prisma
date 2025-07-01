@@ -92,7 +92,7 @@ model Feature {
   name               String
   description        String?
   active             Boolean             @default(true)
-  contentHash        String?
+  contentHash        String?             @map("contenthash")
   featureTags        FeatureTag[]
   RunFeature         RunFeature[]
   MapNodeFeatureData MapNodeFeatureData?
@@ -107,7 +107,7 @@ model Scenario {
   name         String
   description  String?
   active       Boolean       @default(true)
-  contentHash  String?
+  contentHash  String?       @map("contenthash")
   scenarioTags ScenarioTag[]
 
   steps       ScenarioStep[]
@@ -122,7 +122,7 @@ model Step {
   id           String         @id @default(cuid())
   keyword      String
   name         String
-  contentHash  String?
+  contentHash  String?        @map("contenthash")
   active       Boolean        @default(true)
   media        Json?
   ScenarioStep ScenarioStep[]

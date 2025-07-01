@@ -6,6 +6,10 @@ import { getDbClient } from './utils/db';
 const collectScenarios = async (testData: TestData, databaseUrl: string): Promise<ParsedScenario[]> => {
     const dbClient = getDbClient(databaseUrl);
 
+    console.log('dbClient keys:', Object.keys(dbClient));
+    console.log('dbClient.Feature:', dbClient.Feature);
+    console.log('dbClient.Tag:', dbClient.Tag);
+
     const featuresInDb = await dbClient.Feature.findMany();
     const tagsInDb = await dbClient.Tag.findMany();
 

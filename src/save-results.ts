@@ -1,16 +1,9 @@
 import { createId } from './utils/id';
 import { getDbClient } from "./utils/db";
 
-import {
-    TestData
-} from "./types";
+import {TestData } from "./types";
 
-import {
-    RunFeature,
-    RunScenario,
-    RunStep,
-    Status
-} from "@prisma/client";
+import { PrismaClient, RunFeature, RunStep, RunScenario, Status } from '../../../prisma-clients/tcms-data-sync';
 
 import { collectScenarios } from './collect-scenarios';
 import { collectStepsResults } from './collect-steps-results';
@@ -167,7 +160,7 @@ const saveResults = async (
     });
 
     try {
-        await dbClient.$transaction(async (tx) => {
+        await dbClient.$transaction(async (tx: PrismaClient) => {
             console.log("📌 Сохраняем результаты фич...");
             console.log("runFeaturesToCreate:", runFeaturesToCreate);
             await tx.runFeature.createMany({ data: runFeaturesToCreate, skipDuplicates: true });

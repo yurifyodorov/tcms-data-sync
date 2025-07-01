@@ -1,4 +1,6 @@
 import { TestData, ParsedScenario } from './types';
+import type { Feature, Tag } from '../../../prisma-clients/tcms-data-sync';
+
 import { getDbClient } from './utils/db';
 
 const collectScenarios = async (testData: TestData, databaseUrl: string): Promise<ParsedScenario[]> => {
@@ -8,12 +10,12 @@ const collectScenarios = async (testData: TestData, databaseUrl: string): Promis
     const tagsInDb = await dbClient.tag.findMany();
 
     const tagMap = new Map<string, string>();
-    tagsInDb.forEach(tag => tagMap.set(tag.name.trim(), tag.id));
+    tagsInDb.forEach((tag: Tag) => tagMap.set(tag.name.trim(), tag.id));
 
     const allScenarios: ParsedScenario[] = [];
 
     testData.forEach(feature => {
-        const featureInDb = featuresInDb.find(f => f.name.trim().toLowerCase() === feature.name.trim().toLowerCase());
+        const featureInDb = featuresInDb.find((f: Feature) => f.name.trim().toLowerCase() === feature.name.trim().toLowerCase());
 
         if (!featureInDb) {
             console.error(`Feature "${feature.name}" not found in the database.`);

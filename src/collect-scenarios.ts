@@ -7,6 +7,9 @@ const collectScenarios = async (testData: TestData, databaseUrl: string): Promis
     const dbClient = getDbClient(databaseUrl);
 
     console.log('dbClient keys:', Object.keys(dbClient));
+
+    console.log('Available models in dbClient:', Object.keys(dbClient).filter(k => typeof dbClient[k] === 'object' && dbClient[k].findMany));
+
     console.log('dbClient.feature:', dbClient.feature);
     console.log('dbClient.tag:', dbClient.tag);
 

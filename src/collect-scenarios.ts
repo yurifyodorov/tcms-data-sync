@@ -10,8 +10,8 @@ const collectScenarios = async (testData: TestData, databaseUrl: string): Promis
     console.log('dbClient.Feature:', dbClient.Feature);
     console.log('dbClient.Tag:', dbClient.Tag);
 
-    const featuresInDb = await dbClient.Feature.findMany();
-    const tagsInDb = await dbClient.Tag.findMany();
+    const featuresInDb = await dbClient.feature.findMany();
+    const tagsInDb = await dbClient.tag.findMany();
 
     const tagMap = new Map<string, string>();
     tagsInDb.forEach((tag: Tag) => tagMap.set(tag.name.trim(), tag.id));

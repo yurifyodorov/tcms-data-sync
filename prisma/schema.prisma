@@ -135,6 +135,7 @@ model ScenarioStep {
   scenarioId String
   stepId     String
   keyword    String
+  position   Int
 
   scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
   step     Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)

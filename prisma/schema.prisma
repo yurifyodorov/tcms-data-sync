@@ -9,8 +9,8 @@ datasource db {
 }
 
 model Run {
-  id             String        @id @default(cuid())
-  runNumber      Int           @unique @default(autoincrement())
+  id             String @id @default(cuid())
+  runNumber      Int    @unique @default(autoincrement())
   status         Status
   browser        String
   platform       String
@@ -18,16 +18,24 @@ model Run {
   featuresCount  Int
   scenariosCount Int
   stepsCount     Int
-  passCount      Int           @default(0)
-  failCount      Int           @default(0)
-  skipCount      Int           @default(0)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  duration       Int?
-  auto           Boolean
-  RunFeature     RunFeature[]
-  RunScenario    RunScenario[]
-  RunStep        RunStep[]
+
+  // Счётчики по статусам
+  passCount      Int @default(0)
+  failCount      Int @default(0)
+  skipCount      Int @default(0)
+  blockedCount   Int @default(0)
+  retestCount    Int @default(0)
+  untestedCount  Int @default(0)
+  undefinedCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  duration  Int?
+  auto      Boolean
+
+  RunFeature  RunFeature[]
+  RunScenario RunScenario[]
+  RunStep     RunStep[]
 
   @@index([status])
   @@index([platform])

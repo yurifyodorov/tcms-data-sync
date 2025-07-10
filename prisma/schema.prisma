@@ -119,6 +119,7 @@ model Feature {
   description        String?
   active             Boolean             @default(true)
   contentHash        String?             @map("contenthash")
+  position           Int
   featureTags        FeatureTag[]
   RunFeature         RunFeature[]
   MapNodeFeatureData MapNodeFeatureData?
@@ -134,6 +135,7 @@ model Scenario {
   description  String?
   active       Boolean       @default(true)
   contentHash  String?       @map("contenthash")
+  position     Int
   scenarioTags ScenarioTag[]
 
   steps       ScenarioStep[]

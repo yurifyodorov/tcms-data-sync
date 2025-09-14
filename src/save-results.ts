@@ -1,10 +1,17 @@
-import { createId } from './utils/id';
+import { createId } from "./utils/id";
 import { TestData } from "./types";
 
-import { PrismaClient, Prisma, Status, RunStep, RunScenario, RunFeature } from "../prisma-client";
+import {
+    PrismaClient,
+    Prisma,
+    Status,
+    RunStep,
+    RunScenario,
+    RunFeature,
+} from "../prisma-client";
 
-import { collectScenarios } from './collect-scenarios';
-import { collectStepsResults } from './collect-steps-results';
+import { collectScenarios } from "./collect-scenarios";
+import { collectStepsResults } from "./collect-steps-results";
 
 const saveResults = async (
     dbClient: PrismaClient,
@@ -27,39 +34,53 @@ const saveResults = async (
         where: { active: true },
     });
 
-    const stepHashMap = new Map(allSteps.map(step => [step.contentHash!, step.id]));
+    const stepHashMap = new Map(allSteps.map((step) => [step.contentHash!, step.id]));
 
     let featuresCount = 0;
     let scenariosCount = 0;
     let stepsCount = 0;
 
-    let passCount = 0;
-    let failCount = 0;
-    let skipCount = 0;
-    let status: Status = 'passed';
+    let stepPassCount = 0;
+    let stepFailCount = 0;
+    let stepSkipCount = 0;
+
+    let scenarioPassCount = 0;
+    let scenarioFailCount = 0;
+    let scenarioSkipCount = 0;
+
+    let featurePassCount = 0;
+    let featureFailCount = 0;
+    let featureSkipCount = 0;
+
+    let status: Status = "passed";
     let duration = 0;
 
     const runStepsToCreate: RunStep[] = [];
     const runScenariosToCreate: RunScenario[] = [];
     const runFeaturesToCreate: RunFeature[] = [];
 
-    const featureMap = new Map<string, {
-        id: string;
-        name: string;
-        duration: number;
-        status: Status;
-    }>();
+    const featureMap = new Map<
+        string,
+        {
+            id: string;
+            name: string;
+            duration: number;
+            status: Status;
+        }
+    >();
 
     for (const scenarioResult of stepResults) {
         const scenarioName = scenarioResult.scenarioName.trim();
-        const scenarioId = scenarios.find(s => s.name.trim() === scenarioName)?.id;
+        const scenarioId = scenarios.find(
+            (s) => s.name.trim() === scenarioName
+        )?.id;
 
         if (!scenarioId) {
             console.warn(`⚠️ Сценарий "${scenarioName}" не найден в collectScenarios`);
             continue;
         }
 
-        let scenarioStatus: Status = 'passed';
+        let scenarioStatus: Status = "passed";
         let scenarioDuration = 0;
         let scenarioFailed = false;
         let scenarioSkipped = true;
@@ -69,21 +90,26 @@ const saveResults = async (
             scenarioDuration += stepResult.duration;
             duration += stepResult.duration;
 
-            const stepStatus = stepResult.status as Status ?? 'unknown';
+            const stepStatus = (stepResult.status as Status) ?? "unknown";
 
-            if (stepStatus === 'failed') {
-                scenarioStatus = 'failed';
+            if (stepStatus === "failed") {
+                scenarioStatus = "failed";
                 scenarioFailed = true;
                 scenarioSkipped = false;
-            } else if (stepStatus === 'skipped') {
-                if (scenarioStatus !== 'failed') scenarioStatus = 'skipped';
-            } else if (stepStatus === 'passed') {
+                stepFailCount++;
+            } else if (stepStatus === "skipped") {
+                if (scenarioStatus !== "failed") scenarioStatus = "skipped";
+                stepSkipCount++;
+            } else if (stepStatus === "passed") {
                 scenarioSkipped = false;
+                stepPassCount++;
             }
 
             const stepId = stepHashMap.get(stepResult.contentHash);
             if (!stepId) {
-                console.warn(`⚠️ Шаг с contentHash ${stepResult.contentHash} не найден в базе`);
+                console.warn(
+                    `⚠️ Шаг с contentHash ${stepResult.contentHash} не найден в базе`
+                );
                 continue;
             }
 
@@ -96,16 +122,16 @@ const saveResults = async (
                 duration: stepResult.duration,
                 createdAt: new Date(),
                 errorMessage: stepResult.errorMessage ?? null,
-                stackTrace: null
+                stackTrace: null,
             });
         }
 
         if (scenarioSkipped) {
-            skipCount++;
+            scenarioSkipCount++;
         } else if (!scenarioFailed) {
-            passCount++;
+            scenarioPassCount++;
         } else {
-            failCount++;
+            scenarioFailCount++;
         }
 
         runScenariosToCreate.push({
@@ -114,7 +140,7 @@ const saveResults = async (
             runId,
             status: scenarioStatus,
             duration: scenarioDuration,
-            createdAt: new Date()
+            createdAt: new Date(),
         });
 
         scenariosCount++;
@@ -129,12 +155,16 @@ const saveResults = async (
             runId,
             status: feature.status,
             duration: feature.duration,
-            createdAt: new Date()
+            createdAt: new Date(),
         });
+
+        if (feature.status === "failed") featureFailCount++;
+        else if (feature.status === "skipped") featureSkipCount++;
+        else if (feature.status === "passed") featurePassCount++;
     }
 
-    if (failCount > 0) {
-        status = 'failed';
+    if (scenarioFailCount > 0 || stepFailCount > 0 || featureFailCount > 0) {
+        status = "failed";
     }
 
     await dbClient.run.create({
@@ -147,19 +177,34 @@ const saveResults = async (
             featuresCount,
             scenariosCount,
             stepsCount,
-            passCount,
-            failCount,
-            skipCount,
+            featurePassCount,
+            featureFailCount,
+            featureSkipCount,
+            scenarioPassCount,
+            scenarioFailCount,
+            scenarioSkipCount,
+            stepPassCount,
+            stepFailCount,
+            stepSkipCount,
             auto: true,
             duration,
-        }
+        },
     });
 
     try {
         await dbClient.$transaction(async (tx: Prisma.TransactionClient) => {
-            await tx.runFeature.createMany({ data: runFeaturesToCreate, skipDuplicates: true });
-            await tx.runScenario.createMany({ data: runScenariosToCreate, skipDuplicates: true });
-            await tx.runStep.createMany({ data: runStepsToCreate, skipDuplicates: true });
+            await tx.runFeature.createMany({
+                data: runFeaturesToCreate,
+                skipDuplicates: true,
+            });
+            await tx.runScenario.createMany({
+                data: runScenariosToCreate,
+                skipDuplicates: true,
+            });
+            await tx.runStep.createMany({
+                data: runStepsToCreate,
+                skipDuplicates: true,
+            });
 
             await tx.run.update({
                 where: { id: runId },
@@ -167,10 +212,16 @@ const saveResults = async (
                     featuresCount,
                     scenariosCount,
                     stepsCount,
-                    passCount,
-                    failCount,
-                    skipCount,
-                    duration
+                    featurePassCount,
+                    featureFailCount,
+                    featureSkipCount,
+                    scenarioPassCount,
+                    scenarioFailCount,
+                    scenarioSkipCount,
+                    stepPassCount,
+                    stepFailCount,
+                    stepSkipCount,
+                    duration,
                 },
             });
         });

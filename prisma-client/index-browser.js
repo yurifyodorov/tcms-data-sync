@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.10.1
- * Query Engine version: 9b628578b3b7cae625e8c927178f15a170e74a9c
+ * Prisma Client JS version: 6.16.1
+ * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
  */
 Prisma.prismaVersion = {
-  client: "6.10.1",
-  engine: "9b628578b3b7cae625e8c927178f15a170e74a9c"
+  client: "6.16.1",
+  engine: "1c57fdcd7e44b29b9313256c76699e91c3ac3c43"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -130,9 +130,27 @@ exports.Prisma.RunScalarFieldEnum = {
   featuresCount: 'featuresCount',
   scenariosCount: 'scenariosCount',
   stepsCount: 'stepsCount',
-  passCount: 'passCount',
-  failCount: 'failCount',
-  skipCount: 'skipCount',
+  featurePassCount: 'featurePassCount',
+  featureFailCount: 'featureFailCount',
+  featureSkipCount: 'featureSkipCount',
+  featureBlockedCount: 'featureBlockedCount',
+  featureRetestCount: 'featureRetestCount',
+  featureUntestedCount: 'featureUntestedCount',
+  featureUndefinedCount: 'featureUndefinedCount',
+  scenarioPassCount: 'scenarioPassCount',
+  scenarioFailCount: 'scenarioFailCount',
+  scenarioSkipCount: 'scenarioSkipCount',
+  scenarioBlockedCount: 'scenarioBlockedCount',
+  scenarioRetestCount: 'scenarioRetestCount',
+  scenarioUntestedCount: 'scenarioUntestedCount',
+  scenarioUndefinedCount: 'scenarioUndefinedCount',
+  stepPassCount: 'stepPassCount',
+  stepFailCount: 'stepFailCount',
+  stepSkipCount: 'stepSkipCount',
+  stepBlockedCount: 'stepBlockedCount',
+  stepRetestCount: 'stepRetestCount',
+  stepUntestedCount: 'stepUntestedCount',
+  stepUndefinedCount: 'stepUndefinedCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   duration: 'duration',
@@ -175,7 +193,8 @@ exports.Prisma.FeatureScalarFieldEnum = {
   name: 'name',
   description: 'description',
   active: 'active',
-  contentHash: 'contentHash'
+  contentHash: 'contentHash',
+  position: 'position'
 };
 
 exports.Prisma.ScenarioScalarFieldEnum = {
@@ -185,7 +204,8 @@ exports.Prisma.ScenarioScalarFieldEnum = {
   name: 'name',
   description: 'description',
   active: 'active',
-  contentHash: 'contentHash'
+  contentHash: 'contentHash',
+  position: 'position'
 };
 
 exports.Prisma.StepScalarFieldEnum = {
@@ -200,7 +220,8 @@ exports.Prisma.StepScalarFieldEnum = {
 exports.Prisma.ScenarioStepScalarFieldEnum = {
   scenarioId: 'scenarioId',
   stepId: 'stepId',
-  keyword: 'keyword'
+  keyword: 'keyword',
+  position: 'position'
 };
 
 exports.Prisma.TagScalarFieldEnum = {

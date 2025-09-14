@@ -5,13 +5,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 const {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientInitializationError,
+  PrismaClientValidationError,
+  getPrismaClient,
+  sqltag,
+  empty,
+  join,
+  raw,
+  skip,
   Decimal,
+  Debug,
   objectEnumValues,
   makeStrictEnum,
+  Extensions,
+  warnOnce,
+  defineDmmfProperty,
   Public,
   getRuntime,
-  skip
-} = require('./runtime/index-browser.js')
+  createParam,
+} = require('./runtime/wasm-engine-edge.js')
 
 
 const Prisma = {}
@@ -20,79 +35,35 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.10.1
- * Query Engine version: 9b628578b3b7cae625e8c927178f15a170e74a9c
+ * Prisma Client JS version: 6.16.1
+ * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
  */
 Prisma.prismaVersion = {
-  client: "6.10.1",
-  engine: "9b628578b3b7cae625e8c927178f15a170e74a9c"
+  client: "6.16.1",
+  engine: "1c57fdcd7e44b29b9313256c76699e91c3ac3c43"
 }
 
-Prisma.PrismaClientKnownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientKnownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)};
-Prisma.PrismaClientUnknownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientUnknownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientRustPanicError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientRustPanicError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientInitializationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientInitializationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientValidationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientValidationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
+Prisma.PrismaClientUnknownRequestError = PrismaClientUnknownRequestError
+Prisma.PrismaClientRustPanicError = PrismaClientRustPanicError
+Prisma.PrismaClientInitializationError = PrismaClientInitializationError
+Prisma.PrismaClientValidationError = PrismaClientValidationError
 Prisma.Decimal = Decimal
 
 /**
  * Re-export of sql-template-tag
  */
-Prisma.sql = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`sqltag is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.empty = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`empty is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.join = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`join is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.raw = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`raw is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.sql = sqltag
+Prisma.empty = empty
+Prisma.join = join
+Prisma.raw = raw
 Prisma.validator = Public.validator
 
 /**
 * Extensions
 */
-Prisma.getExtensionContext = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.getExtensionContext is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.defineExtension = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.defineExtension is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.getExtensionContext = Extensions.getExtensionContext
+Prisma.defineExtension = Extensions.defineExtension
 
 /**
  * Shorthand utilities for JSON filtering
@@ -109,10 +80,11 @@ Prisma.NullTypes = {
 
 
 
+
+
 /**
  * Enums
  */
-
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
@@ -130,9 +102,27 @@ exports.Prisma.RunScalarFieldEnum = {
   featuresCount: 'featuresCount',
   scenariosCount: 'scenariosCount',
   stepsCount: 'stepsCount',
-  passCount: 'passCount',
-  failCount: 'failCount',
-  skipCount: 'skipCount',
+  featurePassCount: 'featurePassCount',
+  featureFailCount: 'featureFailCount',
+  featureSkipCount: 'featureSkipCount',
+  featureBlockedCount: 'featureBlockedCount',
+  featureRetestCount: 'featureRetestCount',
+  featureUntestedCount: 'featureUntestedCount',
+  featureUndefinedCount: 'featureUndefinedCount',
+  scenarioPassCount: 'scenarioPassCount',
+  scenarioFailCount: 'scenarioFailCount',
+  scenarioSkipCount: 'scenarioSkipCount',
+  scenarioBlockedCount: 'scenarioBlockedCount',
+  scenarioRetestCount: 'scenarioRetestCount',
+  scenarioUntestedCount: 'scenarioUntestedCount',
+  scenarioUndefinedCount: 'scenarioUndefinedCount',
+  stepPassCount: 'stepPassCount',
+  stepFailCount: 'stepFailCount',
+  stepSkipCount: 'stepSkipCount',
+  stepBlockedCount: 'stepBlockedCount',
+  stepRetestCount: 'stepRetestCount',
+  stepUntestedCount: 'stepUntestedCount',
+  stepUndefinedCount: 'stepUndefinedCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   duration: 'duration',
@@ -175,7 +165,8 @@ exports.Prisma.FeatureScalarFieldEnum = {
   name: 'name',
   description: 'description',
   active: 'active',
-  contentHash: 'contentHash'
+  contentHash: 'contentHash',
+  position: 'position'
 };
 
 exports.Prisma.ScenarioScalarFieldEnum = {
@@ -185,7 +176,8 @@ exports.Prisma.ScenarioScalarFieldEnum = {
   name: 'name',
   description: 'description',
   active: 'active',
-  contentHash: 'contentHash'
+  contentHash: 'contentHash',
+  position: 'position'
 };
 
 exports.Prisma.StepScalarFieldEnum = {
@@ -200,7 +192,8 @@ exports.Prisma.StepScalarFieldEnum = {
 exports.Prisma.ScenarioStepScalarFieldEnum = {
   scenarioId: 'scenarioId',
   stepId: 'stepId',
-  keyword: 'keyword'
+  keyword: 'keyword',
+  position: 'position'
 };
 
 exports.Prisma.TagScalarFieldEnum = {
@@ -300,34 +293,82 @@ exports.Prisma.ModelName = {
   MapNodeImageData: 'MapNodeImageData',
   MapNodeDependency: 'MapNodeDependency'
 };
-
 /**
- * This is a stub Prisma Client that will error at runtime if called.
+ * Create the Client
  */
-class PrismaClient {
-  constructor() {
-    return new Proxy(this, {
-      get(target, prop) {
-        let message
-        const runtime = getRuntime()
-        if (runtime.isEdge) {
-          message = `PrismaClient is not configured to run in ${runtime.prettyName}. In order to run Prisma Client on edge runtime, either:
-- Use Prisma Accelerate: https://pris.ly/d/accelerate
-- Use Driver Adapters: https://pris.ly/d/driver-adapters
-`;
-        } else {
-          message = 'PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `' + runtime.prettyName + '`).'
-        }
-
-        message += `
-If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report`
-
-        throw new Error(message)
+const config = {
+  "generator": {
+    "name": "client",
+    "provider": {
+      "fromEnvVar": null,
+      "value": "prisma-client-js"
+    },
+    "output": {
+      "value": "C:\\Users\\yurii\\Documents\\GitHub\\tcms-data-sync\\prisma-client",
+      "fromEnvVar": null
+    },
+    "config": {
+      "engineType": "library"
+    },
+    "binaryTargets": [
+      {
+        "fromEnvVar": null,
+        "value": "windows",
+        "native": true
       }
-    })
+    ],
+    "previewFeatures": [],
+    "sourceFilePath": "C:\\Users\\yurii\\Documents\\GitHub\\tcms-data-sync\\prisma\\schema.prisma",
+    "isCustomOutput": true
+  },
+  "relativeEnvPaths": {
+    "rootEnvPath": null
+  },
+  "relativePath": "../prisma",
+  "clientVersion": "6.16.1",
+  "engineVersion": "1c57fdcd7e44b29b9313256c76699e91c3ac3c43",
+  "datasourceNames": [
+    "db"
+  ],
+  "activeProvider": "postgresql",
+  "postinstall": false,
+  "inlineDatasources": {
+    "db": {
+      "url": {
+        "fromEnvVar": "DATABASE_URL",
+        "value": null
+      }
+    }
+  },
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../prisma-client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Run {\n  id             String @id @default(cuid())\n  runNumber      Int    @unique @default(autoincrement())\n  status         Status\n  browser        String\n  platform       String\n  environment    String\n  featuresCount  Int\n  scenariosCount Int\n  stepsCount     Int\n\n  // Счётчики по статусам — для ФИЧ\n  featurePassCount      Int @default(0)\n  featureFailCount      Int @default(0)\n  featureSkipCount      Int @default(0)\n  featureBlockedCount   Int @default(0)\n  featureRetestCount    Int @default(0)\n  featureUntestedCount  Int @default(0)\n  featureUndefinedCount Int @default(0)\n\n  // Счётчики по статусам — для СЦЕНАРИЕВ\n  scenarioPassCount      Int @default(0)\n  scenarioFailCount      Int @default(0)\n  scenarioSkipCount      Int @default(0)\n  scenarioBlockedCount   Int @default(0)\n  scenarioRetestCount    Int @default(0)\n  scenarioUntestedCount  Int @default(0)\n  scenarioUndefinedCount Int @default(0)\n\n  // Счётчики по статусам — для ШАГОВ\n  stepPassCount      Int @default(0)\n  stepFailCount      Int @default(0)\n  stepSkipCount      Int @default(0)\n  stepBlockedCount   Int @default(0)\n  stepRetestCount    Int @default(0)\n  stepUntestedCount  Int @default(0)\n  stepUndefinedCount Int @default(0)\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  duration  Int?\n  auto      Boolean\n\n  RunFeature  RunFeature[]\n  RunScenario RunScenario[]\n  RunStep     RunStep[]\n\n  @@index([status])\n  @@index([platform])\n  @@index([auto])\n  @@index([createdAt])\n  @@index([status, createdAt])\n  @@map(\"runs\")\n}\n\nmodel RunFeature {\n  id        String   @id @default(cuid())\n  runId     String\n  featureId String\n  status    Status\n  duration  Int?\n  createdAt DateTime @default(now())\n\n  run     Run     @relation(fields: [runId], references: [id], onDelete: Cascade)\n  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)\n\n  @@unique([runId, featureId])\n  @@map(\"run_features\")\n}\n\nmodel RunScenario {\n  id         String   @id @default(cuid())\n  runId      String\n  scenarioId String\n  status     Status\n  duration   Int?\n  createdAt  DateTime @default(now())\n\n  run      Run      @relation(fields: [runId], references: [id], onDelete: Cascade)\n  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)\n\n  @@unique([runId, scenarioId])\n  @@map(\"run_scenarios\")\n}\n\nmodel RunStep {\n  id           String   @id @default(cuid())\n  runId        String\n  stepId       String\n  scenarioId   String\n  status       Status\n  duration     Int?\n  errorMessage String?\n  stackTrace   String?\n  createdAt    DateTime @default(now())\n\n  run      Run      @relation(fields: [runId], references: [id], onDelete: Cascade)\n  step     Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)\n  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)\n\n  @@unique([runId, stepId, scenarioId])\n  @@map(\"run_steps\")\n}\n\nmodel Feature {\n  id                 String              @id @default(cuid())\n  keyword            String\n  name               String\n  description        String?\n  active             Boolean             @default(true)\n  contentHash        String?             @map(\"contenthash\")\n  position           Int\n  featureTags        FeatureTag[]\n  RunFeature         RunFeature[]\n  MapNodeFeatureData MapNodeFeatureData?\n\n  @@map(\"features\")\n}\n\nmodel Scenario {\n  id           String        @id @default(cuid())\n  featureId    String\n  keyword      String\n  name         String\n  description  String?\n  active       Boolean       @default(true)\n  contentHash  String?       @map(\"contenthash\")\n  position     Int\n  scenarioTags ScenarioTag[]\n\n  steps       ScenarioStep[]\n  RunScenario RunScenario[]\n  RunStep     RunStep[]\n\n  @@index([featureId])\n  @@map(\"scenarios\")\n}\n\nmodel Step {\n  id           String         @id @default(cuid())\n  keyword      String\n  name         String\n  contentHash  String?        @map(\"contenthash\")\n  active       Boolean        @default(true)\n  media        Json?\n  ScenarioStep ScenarioStep[]\n  RunStep      RunStep[]\n\n  @@map(\"steps\")\n}\n\nmodel ScenarioStep {\n  scenarioId String\n  stepId     String\n  keyword    String\n  position   Int\n\n  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)\n  step     Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)\n\n  @@id([scenarioId, stepId, keyword])\n  @@map(\"scenario_steps\")\n}\n\nmodel Tag {\n  id           String        @id @default(cuid())\n  name         String        @unique\n  featureTags  FeatureTag[]\n  scenarioTags ScenarioTag[]\n\n  @@map(\"tags\")\n}\n\nmodel FeatureTag {\n  featureId String\n  tagId     String\n\n  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)\n  tag     Tag     @relation(fields: [tagId], references: [id])\n\n  @@id([featureId, tagId])\n  @@map(\"features_tags\")\n}\n\nmodel ScenarioTag {\n  scenarioId String\n  tagId      String\n\n  scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)\n  tag      Tag      @relation(fields: [tagId], references: [id])\n\n  @@id([scenarioId, tagId])\n  @@map(\"scenarios_tags\")\n}\n\nenum Status {\n  passed\n  failed\n  blocked\n  retest\n  skipped\n  untested\n  undefined\n}\n\nmodel MapNode {\n  id       String  @id @default(cuid())\n  x        Float\n  y        Float\n  width    Int     @default(100)\n  height   Int     @default(100)\n  rotation Int     @default(0)\n  scale    Float   @default(1)\n  hidden   Boolean\n  zIndex   Int?\n\n  featureData MapNodeFeatureData?\n  imageData   MapNodeImageData?\n\n  outgoingDependencies MapNodeDependency[] @relation(\"SourceNode\")\n  incomingDependencies MapNodeDependency[] @relation(\"TargetNode\")\n\n  @@map(\"map_nodes\")\n}\n\nmodel MapNodeFeatureData {\n  id        String  @id @default(cuid())\n  featureId String  @unique\n  mapNodeId String  @unique\n  mapNode   MapNode @relation(fields: [mapNodeId], references: [id], onDelete: Cascade)\n  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)\n\n  @@map(\"map_node_feature_data\")\n}\n\nmodel MapNodeImageData {\n  id        String  @id @default(cuid())\n  src       String\n  mapNodeId String  @unique\n  mapNode   MapNode @relation(fields: [mapNodeId], references: [id], onDelete: Cascade)\n\n  @@map(\"map_node_image_data\")\n}\n\nmodel MapNodeDependency {\n  id           String @id @default(cuid())\n  sourceNodeId String\n  targetNodeId String\n\n  sourceNode MapNode @relation(\"SourceNode\", fields: [sourceNodeId], references: [id], onDelete: Cascade)\n  targetNode MapNode @relation(\"TargetNode\", fields: [targetNodeId], references: [id], onDelete: Cascade)\n\n  @@unique([sourceNodeId, targetNodeId])\n  @@map(\"map_node_dependencies\")\n}\n",
+  "inlineSchemaHash": "541b566f3e4d8ef97e604bb683fc1e67fbf29070bbd634149bbc006bf1a19a50",
+  "copyEngine": true
+}
+config.dirname = '/'
+
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Run\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"runNumber\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"Status\"},{\"name\":\"browser\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"platform\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"environment\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"featuresCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenariosCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepsCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featurePassCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureFailCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureSkipCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureBlockedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureRetestCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureUntestedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureUndefinedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioPassCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioFailCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioSkipCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioBlockedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioRetestCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioUntestedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioUndefinedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepPassCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepFailCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepSkipCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepBlockedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepRetestCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepUntestedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"stepUndefinedCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"auto\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"RunFeature\",\"kind\":\"object\",\"type\":\"RunFeature\",\"relationName\":\"RunToRunFeature\"},{\"name\":\"RunScenario\",\"kind\":\"object\",\"type\":\"RunScenario\",\"relationName\":\"RunToRunScenario\"},{\"name\":\"RunStep\",\"kind\":\"object\",\"type\":\"RunStep\",\"relationName\":\"RunToRunStep\"}],\"dbName\":\"runs\"},\"RunFeature\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"runId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"featureId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"Status\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"run\",\"kind\":\"object\",\"type\":\"Run\",\"relationName\":\"RunToRunFeature\"},{\"name\":\"feature\",\"kind\":\"object\",\"type\":\"Feature\",\"relationName\":\"FeatureToRunFeature\"}],\"dbName\":\"run_features\"},\"RunScenario\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"runId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scenarioId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"Status\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"run\",\"kind\":\"object\",\"type\":\"Run\",\"relationName\":\"RunToRunScenario\"},{\"name\":\"scenario\",\"kind\":\"object\",\"type\":\"Scenario\",\"relationName\":\"RunScenarioToScenario\"}],\"dbName\":\"run_scenarios\"},\"RunStep\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"runId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stepId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scenarioId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"Status\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"errorMessage\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stackTrace\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"run\",\"kind\":\"object\",\"type\":\"Run\",\"relationName\":\"RunToRunStep\"},{\"name\":\"step\",\"kind\":\"object\",\"type\":\"Step\",\"relationName\":\"RunStepToStep\"},{\"name\":\"scenario\",\"kind\":\"object\",\"type\":\"Scenario\",\"relationName\":\"RunStepToScenario\"}],\"dbName\":\"run_steps\"},\"Feature\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"keyword\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"contentHash\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"contenthash\"},{\"name\":\"position\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureTags\",\"kind\":\"object\",\"type\":\"FeatureTag\",\"relationName\":\"FeatureToFeatureTag\"},{\"name\":\"RunFeature\",\"kind\":\"object\",\"type\":\"RunFeature\",\"relationName\":\"FeatureToRunFeature\"},{\"name\":\"MapNodeFeatureData\",\"kind\":\"object\",\"type\":\"MapNodeFeatureData\",\"relationName\":\"FeatureToMapNodeFeatureData\"}],\"dbName\":\"features\"},\"Scenario\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"featureId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"keyword\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"contentHash\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"contenthash\"},{\"name\":\"position\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenarioTags\",\"kind\":\"object\",\"type\":\"ScenarioTag\",\"relationName\":\"ScenarioToScenarioTag\"},{\"name\":\"steps\",\"kind\":\"object\",\"type\":\"ScenarioStep\",\"relationName\":\"ScenarioToScenarioStep\"},{\"name\":\"RunScenario\",\"kind\":\"object\",\"type\":\"RunScenario\",\"relationName\":\"RunScenarioToScenario\"},{\"name\":\"RunStep\",\"kind\":\"object\",\"type\":\"RunStep\",\"relationName\":\"RunStepToScenario\"}],\"dbName\":\"scenarios\"},\"Step\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"keyword\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"contentHash\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"contenthash\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"media\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"ScenarioStep\",\"kind\":\"object\",\"type\":\"ScenarioStep\",\"relationName\":\"ScenarioStepToStep\"},{\"name\":\"RunStep\",\"kind\":\"object\",\"type\":\"RunStep\",\"relationName\":\"RunStepToStep\"}],\"dbName\":\"steps\"},\"ScenarioStep\":{\"fields\":[{\"name\":\"scenarioId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stepId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"keyword\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"position\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scenario\",\"kind\":\"object\",\"type\":\"Scenario\",\"relationName\":\"ScenarioToScenarioStep\"},{\"name\":\"step\",\"kind\":\"object\",\"type\":\"Step\",\"relationName\":\"ScenarioStepToStep\"}],\"dbName\":\"scenario_steps\"},\"Tag\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"featureTags\",\"kind\":\"object\",\"type\":\"FeatureTag\",\"relationName\":\"FeatureTagToTag\"},{\"name\":\"scenarioTags\",\"kind\":\"object\",\"type\":\"ScenarioTag\",\"relationName\":\"ScenarioTagToTag\"}],\"dbName\":\"tags\"},\"FeatureTag\":{\"fields\":[{\"name\":\"featureId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tagId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"feature\",\"kind\":\"object\",\"type\":\"Feature\",\"relationName\":\"FeatureToFeatureTag\"},{\"name\":\"tag\",\"kind\":\"object\",\"type\":\"Tag\",\"relationName\":\"FeatureTagToTag\"}],\"dbName\":\"features_tags\"},\"ScenarioTag\":{\"fields\":[{\"name\":\"scenarioId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tagId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scenario\",\"kind\":\"object\",\"type\":\"Scenario\",\"relationName\":\"ScenarioToScenarioTag\"},{\"name\":\"tag\",\"kind\":\"object\",\"type\":\"Tag\",\"relationName\":\"ScenarioTagToTag\"}],\"dbName\":\"scenarios_tags\"},\"MapNode\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"x\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"y\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"width\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"height\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"rotation\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"scale\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"hidden\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"zIndex\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"featureData\",\"kind\":\"object\",\"type\":\"MapNodeFeatureData\",\"relationName\":\"MapNodeToMapNodeFeatureData\"},{\"name\":\"imageData\",\"kind\":\"object\",\"type\":\"MapNodeImageData\",\"relationName\":\"MapNodeToMapNodeImageData\"},{\"name\":\"outgoingDependencies\",\"kind\":\"object\",\"type\":\"MapNodeDependency\",\"relationName\":\"SourceNode\"},{\"name\":\"incomingDependencies\",\"kind\":\"object\",\"type\":\"MapNodeDependency\",\"relationName\":\"TargetNode\"}],\"dbName\":\"map_nodes\"},\"MapNodeFeatureData\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"featureId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mapNodeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mapNode\",\"kind\":\"object\",\"type\":\"MapNode\",\"relationName\":\"MapNodeToMapNodeFeatureData\"},{\"name\":\"feature\",\"kind\":\"object\",\"type\":\"Feature\",\"relationName\":\"FeatureToMapNodeFeatureData\"}],\"dbName\":\"map_node_feature_data\"},\"MapNodeImageData\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"src\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mapNodeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mapNode\",\"kind\":\"object\",\"type\":\"MapNode\",\"relationName\":\"MapNodeToMapNodeImageData\"}],\"dbName\":\"map_node_image_data\"},\"MapNodeDependency\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sourceNodeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"targetNodeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sourceNode\",\"kind\":\"object\",\"type\":\"MapNode\",\"relationName\":\"SourceNode\"},{\"name\":\"targetNode\",\"kind\":\"object\",\"type\":\"MapNode\",\"relationName\":\"TargetNode\"}],\"dbName\":\"map_node_dependencies\"}},\"enums\":{},\"types\":{}}")
+defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
+config.engineWasm = {
+  getRuntime: async () => require('./query_engine_bg.js'),
+  getQueryEngineWasmModule: async () => {
+    const loader = (await import('#wasm-engine-loader')).default
+    const engine = (await loader).default
+    return engine
   }
 }
+config.compilerWasm = undefined
 
+config.injectableEdgeEnv = () => ({
+  parsed: {
+    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
+  }
+})
+
+if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {
+  Debug.enable(typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined)
+}
+
+const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
-
 Object.assign(exports, Prisma)
+

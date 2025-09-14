@@ -5,12 +5,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("TEST_RESULTS_DB_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Run {
-  id             String        @id @default(cuid())
-  runNumber      Int           @unique @default(autoincrement())
+  id             String @id @default(cuid())
+  runNumber      Int    @unique @default(autoincrement())
   status         Status
   browser        String
   platform       String
@@ -18,16 +18,42 @@ model Run {
   featuresCount  Int
   scenariosCount Int
   stepsCount     Int
-  passCount      Int           @default(0)
-  failCount      Int           @default(0)
-  skipCount      Int           @default(0)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  duration       Int?
-  auto           Boolean
-  RunFeature     RunFeature[]
-  RunScenario    RunScenario[]
-  RunStep        RunStep[]
+
+  // Счётчики по статусам — для ФИЧ
+  featurePassCount      Int @default(0)
+  featureFailCount      Int @default(0)
+  featureSkipCount      Int @default(0)
+  featureBlockedCount   Int @default(0)
+  featureRetestCount    Int @default(0)
+  featureUntestedCount  Int @default(0)
+  featureUndefinedCount Int @default(0)
+
+  // Счётчики по статусам — для СЦЕНАРИЕВ
+  scenarioPassCount      Int @default(0)
+  scenarioFailCount      Int @default(0)
+  scenarioSkipCount      Int @default(0)
+  scenarioBlockedCount   Int @default(0)
+  scenarioRetestCount    Int @default(0)
+  scenarioUntestedCount  Int @default(0)
+  scenarioUndefinedCount Int @default(0)
+
+  // Счётчики по статусам — для ШАГОВ
+  stepPassCount      Int @default(0)
+  stepFailCount      Int @default(0)
+  stepSkipCount      Int @default(0)
+  stepBlockedCount   Int @default(0)
+  stepRetestCount    Int @default(0)
+  stepUntestedCount  Int @default(0)
+  stepUndefinedCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  duration  Int?
+  auto      Boolean
+
+  RunFeature  RunFeature[]
+  RunScenario RunScenario[]
+  RunStep     RunStep[]
 
   @@index([status])
   @@index([platform])
@@ -93,6 +119,7 @@ model Feature {
   description        String?
   active             Boolean             @default(true)
   contentHash        String?             @map("contenthash")
+  position           Int
   featureTags        FeatureTag[]
   RunFeature         RunFeature[]
   MapNodeFeatureData MapNodeFeatureData?
@@ -108,6 +135,7 @@ model Scenario {
   description  String?
   active       Boolean       @default(true)
   contentHash  String?       @map("contenthash")
+  position     Int
   scenarioTags ScenarioTag[]
 
   steps       ScenarioStep[]
@@ -135,6 +163,7 @@ model ScenarioStep {
   scenarioId String
   stepId     String
   keyword    String
+  position   Int
 
   scenario Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
   step     Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)

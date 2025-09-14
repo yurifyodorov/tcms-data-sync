@@ -127,7 +127,7 @@ export const Status: typeof $Enums.Status
  */
 export class PrismaClient<
   ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
-  U = 'log' extends keyof ClientOptions ? ClientOptions['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<ClientOptions['log']> : never : never,
+  const U = 'log' extends keyof ClientOptions ? ClientOptions['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<ClientOptions['log']> : never : never,
   ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs
 > {
   [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }
@@ -159,13 +159,6 @@ export class PrismaClient<
    * Disconnect from the database
    */
   $disconnect(): $Utils.JsPromise<void>;
-
-  /**
-   * Add a middleware
-   * @deprecated since 4.16.0. For new code, prefer client extensions instead.
-   * @see https://pris.ly/d/extensions
-   */
-  $use(cb: Prisma.Middleware): void
 
 /**
    * Executes a prepared raw query and returns the number of affected rows.
@@ -443,8 +436,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.10.1
-   * Query Engine version: 9b628578b3b7cae625e8c927178f15a170e74a9c
+   * Prisma Client JS version: 6.16.1
+   * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
    */
   export type PrismaVersion = {
     client: string
@@ -2015,16 +2008,24 @@ export namespace Prisma {
     /**
      * @example
      * ```
-     * // Defaults to stdout
+     * // Shorthand for `emit: 'stdout'`
      * log: ['query', 'info', 'warn', 'error']
      * 
-     * // Emit as events
+     * // Emit as events only
      * log: [
-     *   { emit: 'stdout', level: 'query' },
-     *   { emit: 'stdout', level: 'info' },
-     *   { emit: 'stdout', level: 'warn' }
-     *   { emit: 'stdout', level: 'error' }
+     *   { emit: 'event', level: 'query' },
+     *   { emit: 'event', level: 'info' },
+     *   { emit: 'event', level: 'warn' }
+     *   { emit: 'event', level: 'error' }
      * ]
+     * 
+     * / Emit as events and log to stdout
+     * og: [
+     *  { emit: 'stdout', level: 'query' },
+     *  { emit: 'stdout', level: 'info' },
+     *  { emit: 'stdout', level: 'warn' }
+     *  { emit: 'stdout', level: 'error' }
+     * 
      * ```
      * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
      */
@@ -2039,6 +2040,10 @@ export namespace Prisma {
       timeout?: number
       isolationLevel?: Prisma.TransactionIsolationLevel
     }
+    /**
+     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
+     */
+    adapter?: runtime.SqlDriverAdapterFactory | null
     /**
      * Global configuration for omitting model fields by default.
      * 
@@ -2080,10 +2085,15 @@ export namespace Prisma {
     emit: 'stdout' | 'event'
   }
 
-  export type GetLogType<T extends LogLevel | LogDefinition> = T extends LogDefinition ? T['emit'] extends 'event' ? T['level'] : never : never
-  export type GetEvents<T extends any> = T extends Array<LogLevel | LogDefinition> ?
-    GetLogType<T[0]> | GetLogType<T[1]> | GetLogType<T[2]> | GetLogType<T[3]>
-    : never
+  export type CheckIsLogLevel<T> = T extends LogLevel ? T : never;
+
+  export type GetLogType<T> = CheckIsLogLevel<
+    T extends LogDefinition ? T['level'] : T
+  >;
+
+  export type GetEvents<T extends any[]> = T extends Array<LogLevel | LogDefinition>
+    ? GetLogType<T[number]>
+    : never;
 
   export type QueryEvent = {
     timestamp: Date
@@ -2123,25 +2133,6 @@ export namespace Prisma {
     | 'runCommandRaw'
     | 'findRaw'
     | 'groupBy'
-
-  /**
-   * These options are being passed into the middleware as "params"
-   */
-  export type MiddlewareParams = {
-    model?: ModelName
-    action: PrismaAction
-    args: any
-    dataPath: string[]
-    runInTransaction: boolean
-  }
-
-  /**
-   * The `T` type makes sure, that the `return proceed` is not forgotten in the middleware implementation
-   */
-  export type Middleware<T = any> = (
-    params: MiddlewareParams,
-    next: (params: MiddlewareParams) => $Utils.JsPromise<T>,
-  ) => $Utils.JsPromise<T>
 
   // tested in getLogLevel.test.ts
   export function getLogLevel(log: Array<LogLevel | LogDefinition>): LogLevel | undefined;
@@ -2448,9 +2439,27 @@ export namespace Prisma {
     featuresCount: number | null
     scenariosCount: number | null
     stepsCount: number | null
-    passCount: number | null
-    failCount: number | null
-    skipCount: number | null
+    featurePassCount: number | null
+    featureFailCount: number | null
+    featureSkipCount: number | null
+    featureBlockedCount: number | null
+    featureRetestCount: number | null
+    featureUntestedCount: number | null
+    featureUndefinedCount: number | null
+    scenarioPassCount: number | null
+    scenarioFailCount: number | null
+    scenarioSkipCount: number | null
+    scenarioBlockedCount: number | null
+    scenarioRetestCount: number | null
+    scenarioUntestedCount: number | null
+    scenarioUndefinedCount: number | null
+    stepPassCount: number | null
+    stepFailCount: number | null
+    stepSkipCount: number | null
+    stepBlockedCount: number | null
+    stepRetestCount: number | null
+    stepUntestedCount: number | null
+    stepUndefinedCount: number | null
     duration: number | null
   }
 
@@ -2459,9 +2468,27 @@ export namespace Prisma {
     featuresCount: number | null
     scenariosCount: number | null
     stepsCount: number | null
-    passCount: number | null
-    failCount: number | null
-    skipCount: number | null
+    featurePassCount: number | null
+    featureFailCount: number | null
+    featureSkipCount: number | null
+    featureBlockedCount: number | null
+    featureRetestCount: number | null
+    featureUntestedCount: number | null
+    featureUndefinedCount: number | null
+    scenarioPassCount: number | null
+    scenarioFailCount: number | null
+    scenarioSkipCount: number | null
+    scenarioBlockedCount: number | null
+    scenarioRetestCount: number | null
+    scenarioUntestedCount: number | null
+    scenarioUndefinedCount: number | null
+    stepPassCount: number | null
+    stepFailCount: number | null
+    stepSkipCount: number | null
+    stepBlockedCount: number | null
+    stepRetestCount: number | null
+    stepUntestedCount: number | null
+    stepUndefinedCount: number | null
     duration: number | null
   }
 
@@ -2475,9 +2502,27 @@ export namespace Prisma {
     featuresCount: number | null
     scenariosCount: number | null
     stepsCount: number | null
-    passCount: number | null
-    failCount: number | null
-    skipCount: number | null
+    featurePassCount: number | null
+    featureFailCount: number | null
+    featureSkipCount: number | null
+    featureBlockedCount: number | null
+    featureRetestCount: number | null
+    featureUntestedCount: number | null
+    featureUndefinedCount: number | null
+    scenarioPassCount: number | null
+    scenarioFailCount: number | null
+    scenarioSkipCount: number | null
+    scenarioBlockedCount: number | null
+    scenarioRetestCount: number | null
+    scenarioUntestedCount: number | null
+    scenarioUndefinedCount: number | null
+    stepPassCount: number | null
+    stepFailCount: number | null
+    stepSkipCount: number | null
+    stepBlockedCount: number | null
+    stepRetestCount: number | null
+    stepUntestedCount: number | null
+    stepUndefinedCount: number | null
     createdAt: Date | null
     updatedAt: Date | null
     duration: number | null
@@ -2494,9 +2539,27 @@ export namespace Prisma {
     featuresCount: number | null
     scenariosCount: number | null
     stepsCount: number | null
-    passCount: number | null
-    failCount: number | null
-    skipCount: number | null
+    featurePassCount: number | null
+    featureFailCount: number | null
+    featureSkipCount: number | null
+    featureBlockedCount: number | null
+    featureRetestCount: number | null
+    featureUntestedCount: number | null
+    featureUndefinedCount: number | null
+    scenarioPassCount: number | null
+    scenarioFailCount: number | null
+    scenarioSkipCount: number | null
+    scenarioBlockedCount: number | null
+    scenarioRetestCount: number | null
+    scenarioUntestedCount: number | null
+    scenarioUndefinedCount: number | null
+    stepPassCount: number | null
+    stepFailCount: number | null
+    stepSkipCount: number | null
+    stepBlockedCount: number | null
+    stepRetestCount: number | null
+    stepUntestedCount: number | null
+    stepUndefinedCount: number | null
     createdAt: Date | null
     updatedAt: Date | null
     duration: number | null
@@ -2513,9 +2576,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount: number
-    failCount: number
-    skipCount: number
+    featurePassCount: number
+    featureFailCount: number
+    featureSkipCount: number
+    featureBlockedCount: number
+    featureRetestCount: number
+    featureUntestedCount: number
+    featureUndefinedCount: number
+    scenarioPassCount: number
+    scenarioFailCount: number
+    scenarioSkipCount: number
+    scenarioBlockedCount: number
+    scenarioRetestCount: number
+    scenarioUntestedCount: number
+    scenarioUndefinedCount: number
+    stepPassCount: number
+    stepFailCount: number
+    stepSkipCount: number
+    stepBlockedCount: number
+    stepRetestCount: number
+    stepUntestedCount: number
+    stepUndefinedCount: number
     createdAt: number
     updatedAt: number
     duration: number
@@ -2529,9 +2610,27 @@ export namespace Prisma {
     featuresCount?: true
     scenariosCount?: true
     stepsCount?: true
-    passCount?: true
-    failCount?: true
-    skipCount?: true
+    featurePassCount?: true
+    featureFailCount?: true
+    featureSkipCount?: true
+    featureBlockedCount?: true
+    featureRetestCount?: true
+    featureUntestedCount?: true
+    featureUndefinedCount?: true
+    scenarioPassCount?: true
+    scenarioFailCount?: true
+    scenarioSkipCount?: true
+    scenarioBlockedCount?: true
+    scenarioRetestCount?: true
+    scenarioUntestedCount?: true
+    scenarioUndefinedCount?: true
+    stepPassCount?: true
+    stepFailCount?: true
+    stepSkipCount?: true
+    stepBlockedCount?: true
+    stepRetestCount?: true
+    stepUntestedCount?: true
+    stepUndefinedCount?: true
     duration?: true
   }
 
@@ -2540,9 +2639,27 @@ export namespace Prisma {
     featuresCount?: true
     scenariosCount?: true
     stepsCount?: true
-    passCount?: true
-    failCount?: true
-    skipCount?: true
+    featurePassCount?: true
+    featureFailCount?: true
+    featureSkipCount?: true
+    featureBlockedCount?: true
+    featureRetestCount?: true
+    featureUntestedCount?: true
+    featureUndefinedCount?: true
+    scenarioPassCount?: true
+    scenarioFailCount?: true
+    scenarioSkipCount?: true
+    scenarioBlockedCount?: true
+    scenarioRetestCount?: true
+    scenarioUntestedCount?: true
+    scenarioUndefinedCount?: true
+    stepPassCount?: true
+    stepFailCount?: true
+    stepSkipCount?: true
+    stepBlockedCount?: true
+    stepRetestCount?: true
+    stepUntestedCount?: true
+    stepUndefinedCount?: true
     duration?: true
   }
 
@@ -2556,9 +2673,27 @@ export namespace Prisma {
     featuresCount?: true
     scenariosCount?: true
     stepsCount?: true
-    passCount?: true
-    failCount?: true
-    skipCount?: true
+    featurePassCount?: true
+    featureFailCount?: true
+    featureSkipCount?: true
+    featureBlockedCount?: true
+    featureRetestCount?: true
+    featureUntestedCount?: true
+    featureUndefinedCount?: true
+    scenarioPassCount?: true
+    scenarioFailCount?: true
+    scenarioSkipCount?: true
+    scenarioBlockedCount?: true
+    scenarioRetestCount?: true
+    scenarioUntestedCount?: true
+    scenarioUndefinedCount?: true
+    stepPassCount?: true
+    stepFailCount?: true
+    stepSkipCount?: true
+    stepBlockedCount?: true
+    stepRetestCount?: true
+    stepUntestedCount?: true
+    stepUndefinedCount?: true
     createdAt?: true
     updatedAt?: true
     duration?: true
@@ -2575,9 +2710,27 @@ export namespace Prisma {
     featuresCount?: true
     scenariosCount?: true
     stepsCount?: true
-    passCount?: true
-    failCount?: true
-    skipCount?: true
+    featurePassCount?: true
+    featureFailCount?: true
+    featureSkipCount?: true
+    featureBlockedCount?: true
+    featureRetestCount?: true
+    featureUntestedCount?: true
+    featureUndefinedCount?: true
+    scenarioPassCount?: true
+    scenarioFailCount?: true
+    scenarioSkipCount?: true
+    scenarioBlockedCount?: true
+    scenarioRetestCount?: true
+    scenarioUntestedCount?: true
+    scenarioUndefinedCount?: true
+    stepPassCount?: true
+    stepFailCount?: true
+    stepSkipCount?: true
+    stepBlockedCount?: true
+    stepRetestCount?: true
+    stepUntestedCount?: true
+    stepUndefinedCount?: true
     createdAt?: true
     updatedAt?: true
     duration?: true
@@ -2594,9 +2747,27 @@ export namespace Prisma {
     featuresCount?: true
     scenariosCount?: true
     stepsCount?: true
-    passCount?: true
-    failCount?: true
-    skipCount?: true
+    featurePassCount?: true
+    featureFailCount?: true
+    featureSkipCount?: true
+    featureBlockedCount?: true
+    featureRetestCount?: true
+    featureUntestedCount?: true
+    featureUndefinedCount?: true
+    scenarioPassCount?: true
+    scenarioFailCount?: true
+    scenarioSkipCount?: true
+    scenarioBlockedCount?: true
+    scenarioRetestCount?: true
+    scenarioUntestedCount?: true
+    scenarioUndefinedCount?: true
+    stepPassCount?: true
+    stepFailCount?: true
+    stepSkipCount?: true
+    stepBlockedCount?: true
+    stepRetestCount?: true
+    stepUntestedCount?: true
+    stepUndefinedCount?: true
     createdAt?: true
     updatedAt?: true
     duration?: true
@@ -2700,9 +2871,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount: number
-    failCount: number
-    skipCount: number
+    featurePassCount: number
+    featureFailCount: number
+    featureSkipCount: number
+    featureBlockedCount: number
+    featureRetestCount: number
+    featureUntestedCount: number
+    featureUndefinedCount: number
+    scenarioPassCount: number
+    scenarioFailCount: number
+    scenarioSkipCount: number
+    scenarioBlockedCount: number
+    scenarioRetestCount: number
+    scenarioUntestedCount: number
+    scenarioUndefinedCount: number
+    stepPassCount: number
+    stepFailCount: number
+    stepSkipCount: number
+    stepBlockedCount: number
+    stepRetestCount: number
+    stepUntestedCount: number
+    stepUndefinedCount: number
     createdAt: Date
     updatedAt: Date
     duration: number | null
@@ -2738,9 +2927,27 @@ export namespace Prisma {
     featuresCount?: boolean
     scenariosCount?: boolean
     stepsCount?: boolean
-    passCount?: boolean
-    failCount?: boolean
-    skipCount?: boolean
+    featurePassCount?: boolean
+    featureFailCount?: boolean
+    featureSkipCount?: boolean
+    featureBlockedCount?: boolean
+    featureRetestCount?: boolean
+    featureUntestedCount?: boolean
+    featureUndefinedCount?: boolean
+    scenarioPassCount?: boolean
+    scenarioFailCount?: boolean
+    scenarioSkipCount?: boolean
+    scenarioBlockedCount?: boolean
+    scenarioRetestCount?: boolean
+    scenarioUntestedCount?: boolean
+    scenarioUndefinedCount?: boolean
+    stepPassCount?: boolean
+    stepFailCount?: boolean
+    stepSkipCount?: boolean
+    stepBlockedCount?: boolean
+    stepRetestCount?: boolean
+    stepUntestedCount?: boolean
+    stepUndefinedCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     duration?: boolean
@@ -2761,9 +2968,27 @@ export namespace Prisma {
     featuresCount?: boolean
     scenariosCount?: boolean
     stepsCount?: boolean
-    passCount?: boolean
-    failCount?: boolean
-    skipCount?: boolean
+    featurePassCount?: boolean
+    featureFailCount?: boolean
+    featureSkipCount?: boolean
+    featureBlockedCount?: boolean
+    featureRetestCount?: boolean
+    featureUntestedCount?: boolean
+    featureUndefinedCount?: boolean
+    scenarioPassCount?: boolean
+    scenarioFailCount?: boolean
+    scenarioSkipCount?: boolean
+    scenarioBlockedCount?: boolean
+    scenarioRetestCount?: boolean
+    scenarioUntestedCount?: boolean
+    scenarioUndefinedCount?: boolean
+    stepPassCount?: boolean
+    stepFailCount?: boolean
+    stepSkipCount?: boolean
+    stepBlockedCount?: boolean
+    stepRetestCount?: boolean
+    stepUntestedCount?: boolean
+    stepUndefinedCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     duration?: boolean
@@ -2780,9 +3005,27 @@ export namespace Prisma {
     featuresCount?: boolean
     scenariosCount?: boolean
     stepsCount?: boolean
-    passCount?: boolean
-    failCount?: boolean
-    skipCount?: boolean
+    featurePassCount?: boolean
+    featureFailCount?: boolean
+    featureSkipCount?: boolean
+    featureBlockedCount?: boolean
+    featureRetestCount?: boolean
+    featureUntestedCount?: boolean
+    featureUndefinedCount?: boolean
+    scenarioPassCount?: boolean
+    scenarioFailCount?: boolean
+    scenarioSkipCount?: boolean
+    scenarioBlockedCount?: boolean
+    scenarioRetestCount?: boolean
+    scenarioUntestedCount?: boolean
+    scenarioUndefinedCount?: boolean
+    stepPassCount?: boolean
+    stepFailCount?: boolean
+    stepSkipCount?: boolean
+    stepBlockedCount?: boolean
+    stepRetestCount?: boolean
+    stepUntestedCount?: boolean
+    stepUndefinedCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     duration?: boolean
@@ -2799,16 +3042,34 @@ export namespace Prisma {
     featuresCount?: boolean
     scenariosCount?: boolean
     stepsCount?: boolean
-    passCount?: boolean
-    failCount?: boolean
-    skipCount?: boolean
+    featurePassCount?: boolean
+    featureFailCount?: boolean
+    featureSkipCount?: boolean
+    featureBlockedCount?: boolean
+    featureRetestCount?: boolean
+    featureUntestedCount?: boolean
+    featureUndefinedCount?: boolean
+    scenarioPassCount?: boolean
+    scenarioFailCount?: boolean
+    scenarioSkipCount?: boolean
+    scenarioBlockedCount?: boolean
+    scenarioRetestCount?: boolean
+    scenarioUntestedCount?: boolean
+    scenarioUndefinedCount?: boolean
+    stepPassCount?: boolean
+    stepFailCount?: boolean
+    stepSkipCount?: boolean
+    stepBlockedCount?: boolean
+    stepRetestCount?: boolean
+    stepUntestedCount?: boolean
+    stepUndefinedCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     duration?: boolean
     auto?: boolean
   }
 
-  export type RunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "runNumber" | "status" | "browser" | "platform" | "environment" | "featuresCount" | "scenariosCount" | "stepsCount" | "passCount" | "failCount" | "skipCount" | "createdAt" | "updatedAt" | "duration" | "auto", ExtArgs["result"]["run"]>
+  export type RunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "runNumber" | "status" | "browser" | "platform" | "environment" | "featuresCount" | "scenariosCount" | "stepsCount" | "featurePassCount" | "featureFailCount" | "featureSkipCount" | "featureBlockedCount" | "featureRetestCount" | "featureUntestedCount" | "featureUndefinedCount" | "scenarioPassCount" | "scenarioFailCount" | "scenarioSkipCount" | "scenarioBlockedCount" | "scenarioRetestCount" | "scenarioUntestedCount" | "scenarioUndefinedCount" | "stepPassCount" | "stepFailCount" | "stepSkipCount" | "stepBlockedCount" | "stepRetestCount" | "stepUntestedCount" | "stepUndefinedCount" | "createdAt" | "updatedAt" | "duration" | "auto", ExtArgs["result"]["run"]>
   export type RunInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     RunFeature?: boolean | Run$RunFeatureArgs<ExtArgs>
     RunScenario?: boolean | Run$RunScenarioArgs<ExtArgs>
@@ -2835,9 +3096,27 @@ export namespace Prisma {
       featuresCount: number
       scenariosCount: number
       stepsCount: number
-      passCount: number
-      failCount: number
-      skipCount: number
+      featurePassCount: number
+      featureFailCount: number
+      featureSkipCount: number
+      featureBlockedCount: number
+      featureRetestCount: number
+      featureUntestedCount: number
+      featureUndefinedCount: number
+      scenarioPassCount: number
+      scenarioFailCount: number
+      scenarioSkipCount: number
+      scenarioBlockedCount: number
+      scenarioRetestCount: number
+      scenarioUntestedCount: number
+      scenarioUndefinedCount: number
+      stepPassCount: number
+      stepFailCount: number
+      stepSkipCount: number
+      stepBlockedCount: number
+      stepRetestCount: number
+      stepUntestedCount: number
+      stepUndefinedCount: number
       createdAt: Date
       updatedAt: Date
       duration: number | null
@@ -3277,9 +3556,27 @@ export namespace Prisma {
     readonly featuresCount: FieldRef<"Run", 'Int'>
     readonly scenariosCount: FieldRef<"Run", 'Int'>
     readonly stepsCount: FieldRef<"Run", 'Int'>
-    readonly passCount: FieldRef<"Run", 'Int'>
-    readonly failCount: FieldRef<"Run", 'Int'>
-    readonly skipCount: FieldRef<"Run", 'Int'>
+    readonly featurePassCount: FieldRef<"Run", 'Int'>
+    readonly featureFailCount: FieldRef<"Run", 'Int'>
+    readonly featureSkipCount: FieldRef<"Run", 'Int'>
+    readonly featureBlockedCount: FieldRef<"Run", 'Int'>
+    readonly featureRetestCount: FieldRef<"Run", 'Int'>
+    readonly featureUntestedCount: FieldRef<"Run", 'Int'>
+    readonly featureUndefinedCount: FieldRef<"Run", 'Int'>
+    readonly scenarioPassCount: FieldRef<"Run", 'Int'>
+    readonly scenarioFailCount: FieldRef<"Run", 'Int'>
+    readonly scenarioSkipCount: FieldRef<"Run", 'Int'>
+    readonly scenarioBlockedCount: FieldRef<"Run", 'Int'>
+    readonly scenarioRetestCount: FieldRef<"Run", 'Int'>
+    readonly scenarioUntestedCount: FieldRef<"Run", 'Int'>
+    readonly scenarioUndefinedCount: FieldRef<"Run", 'Int'>
+    readonly stepPassCount: FieldRef<"Run", 'Int'>
+    readonly stepFailCount: FieldRef<"Run", 'Int'>
+    readonly stepSkipCount: FieldRef<"Run", 'Int'>
+    readonly stepBlockedCount: FieldRef<"Run", 'Int'>
+    readonly stepRetestCount: FieldRef<"Run", 'Int'>
+    readonly stepUntestedCount: FieldRef<"Run", 'Int'>
+    readonly stepUndefinedCount: FieldRef<"Run", 'Int'>
     readonly createdAt: FieldRef<"Run", 'DateTime'>
     readonly updatedAt: FieldRef<"Run", 'DateTime'>
     readonly duration: FieldRef<"Run", 'Int'>
@@ -7154,8 +7451,18 @@ export namespace Prisma {
 
   export type AggregateFeature = {
     _count: FeatureCountAggregateOutputType | null
+    _avg: FeatureAvgAggregateOutputType | null
+    _sum: FeatureSumAggregateOutputType | null
     _min: FeatureMinAggregateOutputType | null
     _max: FeatureMaxAggregateOutputType | null
+  }
+
+  export type FeatureAvgAggregateOutputType = {
+    position: number | null
+  }
+
+  export type FeatureSumAggregateOutputType = {
+    position: number | null
   }
 
   export type FeatureMinAggregateOutputType = {
@@ -7165,6 +7472,7 @@ export namespace Prisma {
     description: string | null
     active: boolean | null
     contentHash: string | null
+    position: number | null
   }
 
   export type FeatureMaxAggregateOutputType = {
@@ -7174,6 +7482,7 @@ export namespace Prisma {
     description: string | null
     active: boolean | null
     contentHash: string | null
+    position: number | null
   }
 
   export type FeatureCountAggregateOutputType = {
@@ -7183,9 +7492,18 @@ export namespace Prisma {
     description: number
     active: number
     contentHash: number
+    position: number
     _all: number
   }
 
+
+  export type FeatureAvgAggregateInputType = {
+    position?: true
+  }
+
+  export type FeatureSumAggregateInputType = {
+    position?: true
+  }
 
   export type FeatureMinAggregateInputType = {
     id?: true
@@ -7194,6 +7512,7 @@ export namespace Prisma {
     description?: true
     active?: true
     contentHash?: true
+    position?: true
   }
 
   export type FeatureMaxAggregateInputType = {
@@ -7203,6 +7522,7 @@ export namespace Prisma {
     description?: true
     active?: true
     contentHash?: true
+    position?: true
   }
 
   export type FeatureCountAggregateInputType = {
@@ -7212,6 +7532,7 @@ export namespace Prisma {
     description?: true
     active?: true
     contentHash?: true
+    position?: true
     _all?: true
   }
 
@@ -7253,6 +7574,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: FeatureAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: FeatureSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: FeatureMinAggregateInputType
@@ -7283,6 +7616,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: FeatureCountAggregateInputType | true
+    _avg?: FeatureAvgAggregateInputType
+    _sum?: FeatureSumAggregateInputType
     _min?: FeatureMinAggregateInputType
     _max?: FeatureMaxAggregateInputType
   }
@@ -7294,7 +7629,10 @@ export namespace Prisma {
     description: string | null
     active: boolean
     contentHash: string | null
+    position: number
     _count: FeatureCountAggregateOutputType | null
+    _avg: FeatureAvgAggregateOutputType | null
+    _sum: FeatureSumAggregateOutputType | null
     _min: FeatureMinAggregateOutputType | null
     _max: FeatureMaxAggregateOutputType | null
   }
@@ -7320,6 +7658,7 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
     featureTags?: boolean | Feature$featureTagsArgs<ExtArgs>
     RunFeature?: boolean | Feature$RunFeatureArgs<ExtArgs>
     MapNodeFeatureData?: boolean | Feature$MapNodeFeatureDataArgs<ExtArgs>
@@ -7333,6 +7672,7 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
   }, ExtArgs["result"]["feature"]>
 
   export type FeatureSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7342,6 +7682,7 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
   }, ExtArgs["result"]["feature"]>
 
   export type FeatureSelectScalar = {
@@ -7351,9 +7692,10 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
   }
 
-  export type FeatureOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "keyword" | "name" | "description" | "active" | "contentHash", ExtArgs["result"]["feature"]>
+  export type FeatureOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "keyword" | "name" | "description" | "active" | "contentHash" | "position", ExtArgs["result"]["feature"]>
   export type FeatureInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     featureTags?: boolean | Feature$featureTagsArgs<ExtArgs>
     RunFeature?: boolean | Feature$RunFeatureArgs<ExtArgs>
@@ -7377,6 +7719,7 @@ export namespace Prisma {
       description: string | null
       active: boolean
       contentHash: string | null
+      position: number
     }, ExtArgs["result"]["feature"]>
     composites: {}
   }
@@ -7809,6 +8152,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Feature", 'String'>
     readonly active: FieldRef<"Feature", 'Boolean'>
     readonly contentHash: FieldRef<"Feature", 'String'>
+    readonly position: FieldRef<"Feature", 'Int'>
   }
     
 
@@ -8288,8 +8632,18 @@ export namespace Prisma {
 
   export type AggregateScenario = {
     _count: ScenarioCountAggregateOutputType | null
+    _avg: ScenarioAvgAggregateOutputType | null
+    _sum: ScenarioSumAggregateOutputType | null
     _min: ScenarioMinAggregateOutputType | null
     _max: ScenarioMaxAggregateOutputType | null
+  }
+
+  export type ScenarioAvgAggregateOutputType = {
+    position: number | null
+  }
+
+  export type ScenarioSumAggregateOutputType = {
+    position: number | null
   }
 
   export type ScenarioMinAggregateOutputType = {
@@ -8300,6 +8654,7 @@ export namespace Prisma {
     description: string | null
     active: boolean | null
     contentHash: string | null
+    position: number | null
   }
 
   export type ScenarioMaxAggregateOutputType = {
@@ -8310,6 +8665,7 @@ export namespace Prisma {
     description: string | null
     active: boolean | null
     contentHash: string | null
+    position: number | null
   }
 
   export type ScenarioCountAggregateOutputType = {
@@ -8320,9 +8676,18 @@ export namespace Prisma {
     description: number
     active: number
     contentHash: number
+    position: number
     _all: number
   }
 
+
+  export type ScenarioAvgAggregateInputType = {
+    position?: true
+  }
+
+  export type ScenarioSumAggregateInputType = {
+    position?: true
+  }
 
   export type ScenarioMinAggregateInputType = {
     id?: true
@@ -8332,6 +8697,7 @@ export namespace Prisma {
     description?: true
     active?: true
     contentHash?: true
+    position?: true
   }
 
   export type ScenarioMaxAggregateInputType = {
@@ -8342,6 +8708,7 @@ export namespace Prisma {
     description?: true
     active?: true
     contentHash?: true
+    position?: true
   }
 
   export type ScenarioCountAggregateInputType = {
@@ -8352,6 +8719,7 @@ export namespace Prisma {
     description?: true
     active?: true
     contentHash?: true
+    position?: true
     _all?: true
   }
 
@@ -8393,6 +8761,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ScenarioAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ScenarioSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ScenarioMinAggregateInputType
@@ -8423,6 +8803,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ScenarioCountAggregateInputType | true
+    _avg?: ScenarioAvgAggregateInputType
+    _sum?: ScenarioSumAggregateInputType
     _min?: ScenarioMinAggregateInputType
     _max?: ScenarioMaxAggregateInputType
   }
@@ -8435,7 +8817,10 @@ export namespace Prisma {
     description: string | null
     active: boolean
     contentHash: string | null
+    position: number
     _count: ScenarioCountAggregateOutputType | null
+    _avg: ScenarioAvgAggregateOutputType | null
+    _sum: ScenarioSumAggregateOutputType | null
     _min: ScenarioMinAggregateOutputType | null
     _max: ScenarioMaxAggregateOutputType | null
   }
@@ -8462,6 +8847,7 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
     scenarioTags?: boolean | Scenario$scenarioTagsArgs<ExtArgs>
     steps?: boolean | Scenario$stepsArgs<ExtArgs>
     RunScenario?: boolean | Scenario$RunScenarioArgs<ExtArgs>
@@ -8477,6 +8863,7 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
   }, ExtArgs["result"]["scenario"]>
 
   export type ScenarioSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -8487,6 +8874,7 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
   }, ExtArgs["result"]["scenario"]>
 
   export type ScenarioSelectScalar = {
@@ -8497,9 +8885,10 @@ export namespace Prisma {
     description?: boolean
     active?: boolean
     contentHash?: boolean
+    position?: boolean
   }
 
-  export type ScenarioOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "featureId" | "keyword" | "name" | "description" | "active" | "contentHash", ExtArgs["result"]["scenario"]>
+  export type ScenarioOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "featureId" | "keyword" | "name" | "description" | "active" | "contentHash" | "position", ExtArgs["result"]["scenario"]>
   export type ScenarioInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     scenarioTags?: boolean | Scenario$scenarioTagsArgs<ExtArgs>
     steps?: boolean | Scenario$stepsArgs<ExtArgs>
@@ -8526,6 +8915,7 @@ export namespace Prisma {
       description: string | null
       active: boolean
       contentHash: string | null
+      position: number
     }, ExtArgs["result"]["scenario"]>
     composites: {}
   }
@@ -8960,6 +9350,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Scenario", 'String'>
     readonly active: FieldRef<"Scenario", 'Boolean'>
     readonly contentHash: FieldRef<"Scenario", 'String'>
+    readonly position: FieldRef<"Scenario", 'Int'>
   }
     
 
@@ -10575,46 +10966,70 @@ export namespace Prisma {
 
   export type AggregateScenarioStep = {
     _count: ScenarioStepCountAggregateOutputType | null
+    _avg: ScenarioStepAvgAggregateOutputType | null
+    _sum: ScenarioStepSumAggregateOutputType | null
     _min: ScenarioStepMinAggregateOutputType | null
     _max: ScenarioStepMaxAggregateOutputType | null
+  }
+
+  export type ScenarioStepAvgAggregateOutputType = {
+    position: number | null
+  }
+
+  export type ScenarioStepSumAggregateOutputType = {
+    position: number | null
   }
 
   export type ScenarioStepMinAggregateOutputType = {
     scenarioId: string | null
     stepId: string | null
     keyword: string | null
+    position: number | null
   }
 
   export type ScenarioStepMaxAggregateOutputType = {
     scenarioId: string | null
     stepId: string | null
     keyword: string | null
+    position: number | null
   }
 
   export type ScenarioStepCountAggregateOutputType = {
     scenarioId: number
     stepId: number
     keyword: number
+    position: number
     _all: number
   }
 
+
+  export type ScenarioStepAvgAggregateInputType = {
+    position?: true
+  }
+
+  export type ScenarioStepSumAggregateInputType = {
+    position?: true
+  }
 
   export type ScenarioStepMinAggregateInputType = {
     scenarioId?: true
     stepId?: true
     keyword?: true
+    position?: true
   }
 
   export type ScenarioStepMaxAggregateInputType = {
     scenarioId?: true
     stepId?: true
     keyword?: true
+    position?: true
   }
 
   export type ScenarioStepCountAggregateInputType = {
     scenarioId?: true
     stepId?: true
     keyword?: true
+    position?: true
     _all?: true
   }
 
@@ -10656,6 +11071,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ScenarioStepAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ScenarioStepSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ScenarioStepMinAggregateInputType
@@ -10686,6 +11113,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ScenarioStepCountAggregateInputType | true
+    _avg?: ScenarioStepAvgAggregateInputType
+    _sum?: ScenarioStepSumAggregateInputType
     _min?: ScenarioStepMinAggregateInputType
     _max?: ScenarioStepMaxAggregateInputType
   }
@@ -10694,7 +11123,10 @@ export namespace Prisma {
     scenarioId: string
     stepId: string
     keyword: string
+    position: number
     _count: ScenarioStepCountAggregateOutputType | null
+    _avg: ScenarioStepAvgAggregateOutputType | null
+    _sum: ScenarioStepSumAggregateOutputType | null
     _min: ScenarioStepMinAggregateOutputType | null
     _max: ScenarioStepMaxAggregateOutputType | null
   }
@@ -10717,6 +11149,7 @@ export namespace Prisma {
     scenarioId?: boolean
     stepId?: boolean
     keyword?: boolean
+    position?: boolean
     scenario?: boolean | ScenarioDefaultArgs<ExtArgs>
     step?: boolean | StepDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["scenarioStep"]>
@@ -10725,6 +11158,7 @@ export namespace Prisma {
     scenarioId?: boolean
     stepId?: boolean
     keyword?: boolean
+    position?: boolean
     scenario?: boolean | ScenarioDefaultArgs<ExtArgs>
     step?: boolean | StepDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["scenarioStep"]>
@@ -10733,6 +11167,7 @@ export namespace Prisma {
     scenarioId?: boolean
     stepId?: boolean
     keyword?: boolean
+    position?: boolean
     scenario?: boolean | ScenarioDefaultArgs<ExtArgs>
     step?: boolean | StepDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["scenarioStep"]>
@@ -10741,9 +11176,10 @@ export namespace Prisma {
     scenarioId?: boolean
     stepId?: boolean
     keyword?: boolean
+    position?: boolean
   }
 
-  export type ScenarioStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"scenarioId" | "stepId" | "keyword", ExtArgs["result"]["scenarioStep"]>
+  export type ScenarioStepOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"scenarioId" | "stepId" | "keyword" | "position", ExtArgs["result"]["scenarioStep"]>
   export type ScenarioStepInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     scenario?: boolean | ScenarioDefaultArgs<ExtArgs>
     step?: boolean | StepDefaultArgs<ExtArgs>
@@ -10767,6 +11203,7 @@ export namespace Prisma {
       scenarioId: string
       stepId: string
       keyword: string
+      position: number
     }, ExtArgs["result"]["scenarioStep"]>
     composites: {}
   }
@@ -11195,6 +11632,7 @@ export namespace Prisma {
     readonly scenarioId: FieldRef<"ScenarioStep", 'String'>
     readonly stepId: FieldRef<"ScenarioStep", 'String'>
     readonly keyword: FieldRef<"ScenarioStep", 'String'>
+    readonly position: FieldRef<"ScenarioStep", 'Int'>
   }
     
 
@@ -19112,9 +19550,27 @@ export namespace Prisma {
     featuresCount: 'featuresCount',
     scenariosCount: 'scenariosCount',
     stepsCount: 'stepsCount',
-    passCount: 'passCount',
-    failCount: 'failCount',
-    skipCount: 'skipCount',
+    featurePassCount: 'featurePassCount',
+    featureFailCount: 'featureFailCount',
+    featureSkipCount: 'featureSkipCount',
+    featureBlockedCount: 'featureBlockedCount',
+    featureRetestCount: 'featureRetestCount',
+    featureUntestedCount: 'featureUntestedCount',
+    featureUndefinedCount: 'featureUndefinedCount',
+    scenarioPassCount: 'scenarioPassCount',
+    scenarioFailCount: 'scenarioFailCount',
+    scenarioSkipCount: 'scenarioSkipCount',
+    scenarioBlockedCount: 'scenarioBlockedCount',
+    scenarioRetestCount: 'scenarioRetestCount',
+    scenarioUntestedCount: 'scenarioUntestedCount',
+    scenarioUndefinedCount: 'scenarioUndefinedCount',
+    stepPassCount: 'stepPassCount',
+    stepFailCount: 'stepFailCount',
+    stepSkipCount: 'stepSkipCount',
+    stepBlockedCount: 'stepBlockedCount',
+    stepRetestCount: 'stepRetestCount',
+    stepUntestedCount: 'stepUntestedCount',
+    stepUndefinedCount: 'stepUndefinedCount',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     duration: 'duration',
@@ -19169,7 +19625,8 @@ export namespace Prisma {
     name: 'name',
     description: 'description',
     active: 'active',
-    contentHash: 'contentHash'
+    contentHash: 'contentHash',
+    position: 'position'
   };
 
   export type FeatureScalarFieldEnum = (typeof FeatureScalarFieldEnum)[keyof typeof FeatureScalarFieldEnum]
@@ -19182,7 +19639,8 @@ export namespace Prisma {
     name: 'name',
     description: 'description',
     active: 'active',
-    contentHash: 'contentHash'
+    contentHash: 'contentHash',
+    position: 'position'
   };
 
   export type ScenarioScalarFieldEnum = (typeof ScenarioScalarFieldEnum)[keyof typeof ScenarioScalarFieldEnum]
@@ -19203,7 +19661,8 @@ export namespace Prisma {
   export const ScenarioStepScalarFieldEnum: {
     scenarioId: 'scenarioId',
     stepId: 'stepId',
-    keyword: 'keyword'
+    keyword: 'keyword',
+    position: 'position'
   };
 
   export type ScenarioStepScalarFieldEnum = (typeof ScenarioStepScalarFieldEnum)[keyof typeof ScenarioStepScalarFieldEnum]
@@ -19428,9 +19887,27 @@ export namespace Prisma {
     featuresCount?: IntFilter<"Run"> | number
     scenariosCount?: IntFilter<"Run"> | number
     stepsCount?: IntFilter<"Run"> | number
-    passCount?: IntFilter<"Run"> | number
-    failCount?: IntFilter<"Run"> | number
-    skipCount?: IntFilter<"Run"> | number
+    featurePassCount?: IntFilter<"Run"> | number
+    featureFailCount?: IntFilter<"Run"> | number
+    featureSkipCount?: IntFilter<"Run"> | number
+    featureBlockedCount?: IntFilter<"Run"> | number
+    featureRetestCount?: IntFilter<"Run"> | number
+    featureUntestedCount?: IntFilter<"Run"> | number
+    featureUndefinedCount?: IntFilter<"Run"> | number
+    scenarioPassCount?: IntFilter<"Run"> | number
+    scenarioFailCount?: IntFilter<"Run"> | number
+    scenarioSkipCount?: IntFilter<"Run"> | number
+    scenarioBlockedCount?: IntFilter<"Run"> | number
+    scenarioRetestCount?: IntFilter<"Run"> | number
+    scenarioUntestedCount?: IntFilter<"Run"> | number
+    scenarioUndefinedCount?: IntFilter<"Run"> | number
+    stepPassCount?: IntFilter<"Run"> | number
+    stepFailCount?: IntFilter<"Run"> | number
+    stepSkipCount?: IntFilter<"Run"> | number
+    stepBlockedCount?: IntFilter<"Run"> | number
+    stepRetestCount?: IntFilter<"Run"> | number
+    stepUntestedCount?: IntFilter<"Run"> | number
+    stepUndefinedCount?: IntFilter<"Run"> | number
     createdAt?: DateTimeFilter<"Run"> | Date | string
     updatedAt?: DateTimeFilter<"Run"> | Date | string
     duration?: IntNullableFilter<"Run"> | number | null
@@ -19450,9 +19927,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     duration?: SortOrderInput | SortOrder
@@ -19475,9 +19970,27 @@ export namespace Prisma {
     featuresCount?: IntFilter<"Run"> | number
     scenariosCount?: IntFilter<"Run"> | number
     stepsCount?: IntFilter<"Run"> | number
-    passCount?: IntFilter<"Run"> | number
-    failCount?: IntFilter<"Run"> | number
-    skipCount?: IntFilter<"Run"> | number
+    featurePassCount?: IntFilter<"Run"> | number
+    featureFailCount?: IntFilter<"Run"> | number
+    featureSkipCount?: IntFilter<"Run"> | number
+    featureBlockedCount?: IntFilter<"Run"> | number
+    featureRetestCount?: IntFilter<"Run"> | number
+    featureUntestedCount?: IntFilter<"Run"> | number
+    featureUndefinedCount?: IntFilter<"Run"> | number
+    scenarioPassCount?: IntFilter<"Run"> | number
+    scenarioFailCount?: IntFilter<"Run"> | number
+    scenarioSkipCount?: IntFilter<"Run"> | number
+    scenarioBlockedCount?: IntFilter<"Run"> | number
+    scenarioRetestCount?: IntFilter<"Run"> | number
+    scenarioUntestedCount?: IntFilter<"Run"> | number
+    scenarioUndefinedCount?: IntFilter<"Run"> | number
+    stepPassCount?: IntFilter<"Run"> | number
+    stepFailCount?: IntFilter<"Run"> | number
+    stepSkipCount?: IntFilter<"Run"> | number
+    stepBlockedCount?: IntFilter<"Run"> | number
+    stepRetestCount?: IntFilter<"Run"> | number
+    stepUntestedCount?: IntFilter<"Run"> | number
+    stepUndefinedCount?: IntFilter<"Run"> | number
     createdAt?: DateTimeFilter<"Run"> | Date | string
     updatedAt?: DateTimeFilter<"Run"> | Date | string
     duration?: IntNullableFilter<"Run"> | number | null
@@ -19497,9 +20010,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     duration?: SortOrderInput | SortOrder
@@ -19524,9 +20055,27 @@ export namespace Prisma {
     featuresCount?: IntWithAggregatesFilter<"Run"> | number
     scenariosCount?: IntWithAggregatesFilter<"Run"> | number
     stepsCount?: IntWithAggregatesFilter<"Run"> | number
-    passCount?: IntWithAggregatesFilter<"Run"> | number
-    failCount?: IntWithAggregatesFilter<"Run"> | number
-    skipCount?: IntWithAggregatesFilter<"Run"> | number
+    featurePassCount?: IntWithAggregatesFilter<"Run"> | number
+    featureFailCount?: IntWithAggregatesFilter<"Run"> | number
+    featureSkipCount?: IntWithAggregatesFilter<"Run"> | number
+    featureBlockedCount?: IntWithAggregatesFilter<"Run"> | number
+    featureRetestCount?: IntWithAggregatesFilter<"Run"> | number
+    featureUntestedCount?: IntWithAggregatesFilter<"Run"> | number
+    featureUndefinedCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioPassCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioFailCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioSkipCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioBlockedCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioRetestCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioUntestedCount?: IntWithAggregatesFilter<"Run"> | number
+    scenarioUndefinedCount?: IntWithAggregatesFilter<"Run"> | number
+    stepPassCount?: IntWithAggregatesFilter<"Run"> | number
+    stepFailCount?: IntWithAggregatesFilter<"Run"> | number
+    stepSkipCount?: IntWithAggregatesFilter<"Run"> | number
+    stepBlockedCount?: IntWithAggregatesFilter<"Run"> | number
+    stepRetestCount?: IntWithAggregatesFilter<"Run"> | number
+    stepUntestedCount?: IntWithAggregatesFilter<"Run"> | number
+    stepUndefinedCount?: IntWithAggregatesFilter<"Run"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Run"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Run"> | Date | string
     duration?: IntNullableWithAggregatesFilter<"Run"> | number | null
@@ -19759,6 +20308,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Feature"> | string | null
     active?: BoolFilter<"Feature"> | boolean
     contentHash?: StringNullableFilter<"Feature"> | string | null
+    position?: IntFilter<"Feature"> | number
     featureTags?: FeatureTagListRelationFilter
     RunFeature?: RunFeatureListRelationFilter
     MapNodeFeatureData?: XOR<MapNodeFeatureDataNullableScalarRelationFilter, MapNodeFeatureDataWhereInput> | null
@@ -19771,6 +20321,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     active?: SortOrder
     contentHash?: SortOrderInput | SortOrder
+    position?: SortOrder
     featureTags?: FeatureTagOrderByRelationAggregateInput
     RunFeature?: RunFeatureOrderByRelationAggregateInput
     MapNodeFeatureData?: MapNodeFeatureDataOrderByWithRelationInput
@@ -19786,6 +20337,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Feature"> | string | null
     active?: BoolFilter<"Feature"> | boolean
     contentHash?: StringNullableFilter<"Feature"> | string | null
+    position?: IntFilter<"Feature"> | number
     featureTags?: FeatureTagListRelationFilter
     RunFeature?: RunFeatureListRelationFilter
     MapNodeFeatureData?: XOR<MapNodeFeatureDataNullableScalarRelationFilter, MapNodeFeatureDataWhereInput> | null
@@ -19798,9 +20350,12 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     active?: SortOrder
     contentHash?: SortOrderInput | SortOrder
+    position?: SortOrder
     _count?: FeatureCountOrderByAggregateInput
+    _avg?: FeatureAvgOrderByAggregateInput
     _max?: FeatureMaxOrderByAggregateInput
     _min?: FeatureMinOrderByAggregateInput
+    _sum?: FeatureSumOrderByAggregateInput
   }
 
   export type FeatureScalarWhereWithAggregatesInput = {
@@ -19813,6 +20368,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Feature"> | string | null
     active?: BoolWithAggregatesFilter<"Feature"> | boolean
     contentHash?: StringNullableWithAggregatesFilter<"Feature"> | string | null
+    position?: IntWithAggregatesFilter<"Feature"> | number
   }
 
   export type ScenarioWhereInput = {
@@ -19826,6 +20382,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Scenario"> | string | null
     active?: BoolFilter<"Scenario"> | boolean
     contentHash?: StringNullableFilter<"Scenario"> | string | null
+    position?: IntFilter<"Scenario"> | number
     scenarioTags?: ScenarioTagListRelationFilter
     steps?: ScenarioStepListRelationFilter
     RunScenario?: RunScenarioListRelationFilter
@@ -19840,6 +20397,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     active?: SortOrder
     contentHash?: SortOrderInput | SortOrder
+    position?: SortOrder
     scenarioTags?: ScenarioTagOrderByRelationAggregateInput
     steps?: ScenarioStepOrderByRelationAggregateInput
     RunScenario?: RunScenarioOrderByRelationAggregateInput
@@ -19857,6 +20415,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Scenario"> | string | null
     active?: BoolFilter<"Scenario"> | boolean
     contentHash?: StringNullableFilter<"Scenario"> | string | null
+    position?: IntFilter<"Scenario"> | number
     scenarioTags?: ScenarioTagListRelationFilter
     steps?: ScenarioStepListRelationFilter
     RunScenario?: RunScenarioListRelationFilter
@@ -19871,9 +20430,12 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     active?: SortOrder
     contentHash?: SortOrderInput | SortOrder
+    position?: SortOrder
     _count?: ScenarioCountOrderByAggregateInput
+    _avg?: ScenarioAvgOrderByAggregateInput
     _max?: ScenarioMaxOrderByAggregateInput
     _min?: ScenarioMinOrderByAggregateInput
+    _sum?: ScenarioSumOrderByAggregateInput
   }
 
   export type ScenarioScalarWhereWithAggregatesInput = {
@@ -19887,6 +20449,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Scenario"> | string | null
     active?: BoolWithAggregatesFilter<"Scenario"> | boolean
     contentHash?: StringNullableWithAggregatesFilter<"Scenario"> | string | null
+    position?: IntWithAggregatesFilter<"Scenario"> | number
   }
 
   export type StepWhereInput = {
@@ -19959,6 +20522,7 @@ export namespace Prisma {
     scenarioId?: StringFilter<"ScenarioStep"> | string
     stepId?: StringFilter<"ScenarioStep"> | string
     keyword?: StringFilter<"ScenarioStep"> | string
+    position?: IntFilter<"ScenarioStep"> | number
     scenario?: XOR<ScenarioScalarRelationFilter, ScenarioWhereInput>
     step?: XOR<StepScalarRelationFilter, StepWhereInput>
   }
@@ -19967,6 +20531,7 @@ export namespace Prisma {
     scenarioId?: SortOrder
     stepId?: SortOrder
     keyword?: SortOrder
+    position?: SortOrder
     scenario?: ScenarioOrderByWithRelationInput
     step?: StepOrderByWithRelationInput
   }
@@ -19979,6 +20544,7 @@ export namespace Prisma {
     scenarioId?: StringFilter<"ScenarioStep"> | string
     stepId?: StringFilter<"ScenarioStep"> | string
     keyword?: StringFilter<"ScenarioStep"> | string
+    position?: IntFilter<"ScenarioStep"> | number
     scenario?: XOR<ScenarioScalarRelationFilter, ScenarioWhereInput>
     step?: XOR<StepScalarRelationFilter, StepWhereInput>
   }, "scenarioId_stepId_keyword">
@@ -19987,9 +20553,12 @@ export namespace Prisma {
     scenarioId?: SortOrder
     stepId?: SortOrder
     keyword?: SortOrder
+    position?: SortOrder
     _count?: ScenarioStepCountOrderByAggregateInput
+    _avg?: ScenarioStepAvgOrderByAggregateInput
     _max?: ScenarioStepMaxOrderByAggregateInput
     _min?: ScenarioStepMinOrderByAggregateInput
+    _sum?: ScenarioStepSumOrderByAggregateInput
   }
 
   export type ScenarioStepScalarWhereWithAggregatesInput = {
@@ -19999,6 +20568,7 @@ export namespace Prisma {
     scenarioId?: StringWithAggregatesFilter<"ScenarioStep"> | string
     stepId?: StringWithAggregatesFilter<"ScenarioStep"> | string
     keyword?: StringWithAggregatesFilter<"ScenarioStep"> | string
+    position?: IntWithAggregatesFilter<"ScenarioStep"> | number
   }
 
   export type TagWhereInput = {
@@ -20370,9 +20940,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -20392,9 +20980,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -20413,9 +21019,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -20435,9 +21059,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -20457,9 +21099,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -20475,9 +21135,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -20494,9 +21172,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -20713,6 +21409,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     featureTags?: FeatureTagCreateNestedManyWithoutFeatureInput
     RunFeature?: RunFeatureCreateNestedManyWithoutFeatureInput
     MapNodeFeatureData?: MapNodeFeatureDataCreateNestedOneWithoutFeatureInput
@@ -20725,6 +21422,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     featureTags?: FeatureTagUncheckedCreateNestedManyWithoutFeatureInput
     RunFeature?: RunFeatureUncheckedCreateNestedManyWithoutFeatureInput
     MapNodeFeatureData?: MapNodeFeatureDataUncheckedCreateNestedOneWithoutFeatureInput
@@ -20737,6 +21435,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     featureTags?: FeatureTagUpdateManyWithoutFeatureNestedInput
     RunFeature?: RunFeatureUpdateManyWithoutFeatureNestedInput
     MapNodeFeatureData?: MapNodeFeatureDataUpdateOneWithoutFeatureNestedInput
@@ -20749,6 +21448,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     featureTags?: FeatureTagUncheckedUpdateManyWithoutFeatureNestedInput
     RunFeature?: RunFeatureUncheckedUpdateManyWithoutFeatureNestedInput
     MapNodeFeatureData?: MapNodeFeatureDataUncheckedUpdateOneWithoutFeatureNestedInput
@@ -20761,6 +21461,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
   }
 
   export type FeatureUpdateManyMutationInput = {
@@ -20770,6 +21471,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type FeatureUncheckedUpdateManyInput = {
@@ -20779,6 +21481,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type ScenarioCreateInput = {
@@ -20789,6 +21492,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagCreateNestedManyWithoutScenarioInput
     steps?: ScenarioStepCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioCreateNestedManyWithoutScenarioInput
@@ -20803,6 +21507,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagUncheckedCreateNestedManyWithoutScenarioInput
     steps?: ScenarioStepUncheckedCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioUncheckedCreateNestedManyWithoutScenarioInput
@@ -20817,6 +21522,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUpdateManyWithoutScenarioNestedInput
     steps?: ScenarioStepUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUpdateManyWithoutScenarioNestedInput
@@ -20831,6 +21537,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUncheckedUpdateManyWithoutScenarioNestedInput
     steps?: ScenarioStepUncheckedUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUncheckedUpdateManyWithoutScenarioNestedInput
@@ -20845,6 +21552,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
   }
 
   export type ScenarioUpdateManyMutationInput = {
@@ -20855,6 +21563,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type ScenarioUncheckedUpdateManyInput = {
@@ -20865,6 +21574,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type StepCreateInput = {
@@ -20940,6 +21650,7 @@ export namespace Prisma {
 
   export type ScenarioStepCreateInput = {
     keyword: string
+    position: number
     scenario: ScenarioCreateNestedOneWithoutStepsInput
     step: StepCreateNestedOneWithoutScenarioStepInput
   }
@@ -20948,10 +21659,12 @@ export namespace Prisma {
     scenarioId: string
     stepId: string
     keyword: string
+    position: number
   }
 
   export type ScenarioStepUpdateInput = {
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     scenario?: ScenarioUpdateOneRequiredWithoutStepsNestedInput
     step?: StepUpdateOneRequiredWithoutScenarioStepNestedInput
   }
@@ -20960,22 +21673,26 @@ export namespace Prisma {
     scenarioId?: StringFieldUpdateOperationsInput | string
     stepId?: StringFieldUpdateOperationsInput | string
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type ScenarioStepCreateManyInput = {
     scenarioId: string
     stepId: string
     keyword: string
+    position: number
   }
 
   export type ScenarioStepUpdateManyMutationInput = {
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type ScenarioStepUncheckedUpdateManyInput = {
     scenarioId?: StringFieldUpdateOperationsInput | string
     stepId?: StringFieldUpdateOperationsInput | string
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type TagCreateInput = {
@@ -21415,9 +22132,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     duration?: SortOrder
@@ -21429,9 +22164,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     duration?: SortOrder
   }
 
@@ -21445,9 +22198,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     duration?: SortOrder
@@ -21464,9 +22235,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     duration?: SortOrder
@@ -21478,9 +22267,27 @@ export namespace Prisma {
     featuresCount?: SortOrder
     scenariosCount?: SortOrder
     stepsCount?: SortOrder
-    passCount?: SortOrder
-    failCount?: SortOrder
-    skipCount?: SortOrder
+    featurePassCount?: SortOrder
+    featureFailCount?: SortOrder
+    featureSkipCount?: SortOrder
+    featureBlockedCount?: SortOrder
+    featureRetestCount?: SortOrder
+    featureUntestedCount?: SortOrder
+    featureUndefinedCount?: SortOrder
+    scenarioPassCount?: SortOrder
+    scenarioFailCount?: SortOrder
+    scenarioSkipCount?: SortOrder
+    scenarioBlockedCount?: SortOrder
+    scenarioRetestCount?: SortOrder
+    scenarioUntestedCount?: SortOrder
+    scenarioUndefinedCount?: SortOrder
+    stepPassCount?: SortOrder
+    stepFailCount?: SortOrder
+    stepSkipCount?: SortOrder
+    stepBlockedCount?: SortOrder
+    stepRetestCount?: SortOrder
+    stepUntestedCount?: SortOrder
+    stepUndefinedCount?: SortOrder
     duration?: SortOrder
   }
 
@@ -21771,6 +22578,11 @@ export namespace Prisma {
     description?: SortOrder
     active?: SortOrder
     contentHash?: SortOrder
+    position?: SortOrder
+  }
+
+  export type FeatureAvgOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type FeatureMaxOrderByAggregateInput = {
@@ -21780,6 +22592,7 @@ export namespace Prisma {
     description?: SortOrder
     active?: SortOrder
     contentHash?: SortOrder
+    position?: SortOrder
   }
 
   export type FeatureMinOrderByAggregateInput = {
@@ -21789,6 +22602,11 @@ export namespace Prisma {
     description?: SortOrder
     active?: SortOrder
     contentHash?: SortOrder
+    position?: SortOrder
+  }
+
+  export type FeatureSumOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type ScenarioTagListRelationFilter = {
@@ -21819,6 +22637,11 @@ export namespace Prisma {
     description?: SortOrder
     active?: SortOrder
     contentHash?: SortOrder
+    position?: SortOrder
+  }
+
+  export type ScenarioAvgOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type ScenarioMaxOrderByAggregateInput = {
@@ -21829,6 +22652,7 @@ export namespace Prisma {
     description?: SortOrder
     active?: SortOrder
     contentHash?: SortOrder
+    position?: SortOrder
   }
 
   export type ScenarioMinOrderByAggregateInput = {
@@ -21839,6 +22663,11 @@ export namespace Prisma {
     description?: SortOrder
     active?: SortOrder
     contentHash?: SortOrder
+    position?: SortOrder
+  }
+
+  export type ScenarioSumOrderByAggregateInput = {
+    position?: SortOrder
   }
   export type JsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -21925,18 +22754,29 @@ export namespace Prisma {
     scenarioId?: SortOrder
     stepId?: SortOrder
     keyword?: SortOrder
+    position?: SortOrder
+  }
+
+  export type ScenarioStepAvgOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type ScenarioStepMaxOrderByAggregateInput = {
     scenarioId?: SortOrder
     stepId?: SortOrder
     keyword?: SortOrder
+    position?: SortOrder
   }
 
   export type ScenarioStepMinOrderByAggregateInput = {
     scenarioId?: SortOrder
     stepId?: SortOrder
     keyword?: SortOrder
+    position?: SortOrder
+  }
+
+  export type ScenarioStepSumOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type TagCountOrderByAggregateInput = {
@@ -23596,9 +24436,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -23617,9 +24475,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -23640,6 +24516,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     featureTags?: FeatureTagCreateNestedManyWithoutFeatureInput
     MapNodeFeatureData?: MapNodeFeatureDataCreateNestedOneWithoutFeatureInput
   }
@@ -23651,6 +24528,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     featureTags?: FeatureTagUncheckedCreateNestedManyWithoutFeatureInput
     MapNodeFeatureData?: MapNodeFeatureDataUncheckedCreateNestedOneWithoutFeatureInput
   }
@@ -23680,9 +24558,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -23701,9 +24597,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -23730,6 +24644,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     featureTags?: FeatureTagUpdateManyWithoutFeatureNestedInput
     MapNodeFeatureData?: MapNodeFeatureDataUpdateOneWithoutFeatureNestedInput
   }
@@ -23741,6 +24656,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     featureTags?: FeatureTagUncheckedUpdateManyWithoutFeatureNestedInput
     MapNodeFeatureData?: MapNodeFeatureDataUncheckedUpdateOneWithoutFeatureNestedInput
   }
@@ -23755,9 +24671,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -23776,9 +24710,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -23800,6 +24752,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagCreateNestedManyWithoutScenarioInput
     steps?: ScenarioStepCreateNestedManyWithoutScenarioInput
     RunStep?: RunStepCreateNestedManyWithoutScenarioInput
@@ -23813,6 +24766,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagUncheckedCreateNestedManyWithoutScenarioInput
     steps?: ScenarioStepUncheckedCreateNestedManyWithoutScenarioInput
     RunStep?: RunStepUncheckedCreateNestedManyWithoutScenarioInput
@@ -23843,9 +24797,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -23864,9 +24836,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -23894,6 +24884,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUpdateManyWithoutScenarioNestedInput
     steps?: ScenarioStepUpdateManyWithoutScenarioNestedInput
     RunStep?: RunStepUpdateManyWithoutScenarioNestedInput
@@ -23907,6 +24898,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUncheckedUpdateManyWithoutScenarioNestedInput
     steps?: ScenarioStepUncheckedUpdateManyWithoutScenarioNestedInput
     RunStep?: RunStepUncheckedUpdateManyWithoutScenarioNestedInput
@@ -23922,9 +24914,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -23943,9 +24953,27 @@ export namespace Prisma {
     featuresCount: number
     scenariosCount: number
     stepsCount: number
-    passCount?: number
-    failCount?: number
-    skipCount?: number
+    featurePassCount?: number
+    featureFailCount?: number
+    featureSkipCount?: number
+    featureBlockedCount?: number
+    featureRetestCount?: number
+    featureUntestedCount?: number
+    featureUndefinedCount?: number
+    scenarioPassCount?: number
+    scenarioFailCount?: number
+    scenarioSkipCount?: number
+    scenarioBlockedCount?: number
+    scenarioRetestCount?: number
+    scenarioUntestedCount?: number
+    scenarioUndefinedCount?: number
+    stepPassCount?: number
+    stepFailCount?: number
+    stepSkipCount?: number
+    stepBlockedCount?: number
+    stepRetestCount?: number
+    stepUntestedCount?: number
+    stepUndefinedCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     duration?: number | null
@@ -23992,6 +25020,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagCreateNestedManyWithoutScenarioInput
     steps?: ScenarioStepCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioCreateNestedManyWithoutScenarioInput
@@ -24005,6 +25034,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagUncheckedCreateNestedManyWithoutScenarioInput
     steps?: ScenarioStepUncheckedCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioUncheckedCreateNestedManyWithoutScenarioInput
@@ -24035,9 +25065,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -24056,9 +25104,27 @@ export namespace Prisma {
     featuresCount?: IntFieldUpdateOperationsInput | number
     scenariosCount?: IntFieldUpdateOperationsInput | number
     stepsCount?: IntFieldUpdateOperationsInput | number
-    passCount?: IntFieldUpdateOperationsInput | number
-    failCount?: IntFieldUpdateOperationsInput | number
-    skipCount?: IntFieldUpdateOperationsInput | number
+    featurePassCount?: IntFieldUpdateOperationsInput | number
+    featureFailCount?: IntFieldUpdateOperationsInput | number
+    featureSkipCount?: IntFieldUpdateOperationsInput | number
+    featureBlockedCount?: IntFieldUpdateOperationsInput | number
+    featureRetestCount?: IntFieldUpdateOperationsInput | number
+    featureUntestedCount?: IntFieldUpdateOperationsInput | number
+    featureUndefinedCount?: IntFieldUpdateOperationsInput | number
+    scenarioPassCount?: IntFieldUpdateOperationsInput | number
+    scenarioFailCount?: IntFieldUpdateOperationsInput | number
+    scenarioSkipCount?: IntFieldUpdateOperationsInput | number
+    scenarioBlockedCount?: IntFieldUpdateOperationsInput | number
+    scenarioRetestCount?: IntFieldUpdateOperationsInput | number
+    scenarioUntestedCount?: IntFieldUpdateOperationsInput | number
+    scenarioUndefinedCount?: IntFieldUpdateOperationsInput | number
+    stepPassCount?: IntFieldUpdateOperationsInput | number
+    stepFailCount?: IntFieldUpdateOperationsInput | number
+    stepSkipCount?: IntFieldUpdateOperationsInput | number
+    stepBlockedCount?: IntFieldUpdateOperationsInput | number
+    stepRetestCount?: IntFieldUpdateOperationsInput | number
+    stepUntestedCount?: IntFieldUpdateOperationsInput | number
+    stepUndefinedCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     duration?: NullableIntFieldUpdateOperationsInput | number | null
@@ -24117,6 +25183,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUpdateManyWithoutScenarioNestedInput
     steps?: ScenarioStepUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUpdateManyWithoutScenarioNestedInput
@@ -24130,6 +25197,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUncheckedUpdateManyWithoutScenarioNestedInput
     steps?: ScenarioStepUncheckedUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUncheckedUpdateManyWithoutScenarioNestedInput
@@ -24275,12 +25343,14 @@ export namespace Prisma {
 
   export type ScenarioStepCreateWithoutScenarioInput = {
     keyword: string
+    position: number
     step: StepCreateNestedOneWithoutScenarioStepInput
   }
 
   export type ScenarioStepUncheckedCreateWithoutScenarioInput = {
     stepId: string
     keyword: string
+    position: number
   }
 
   export type ScenarioStepCreateOrConnectWithoutScenarioInput = {
@@ -24398,6 +25468,7 @@ export namespace Prisma {
     scenarioId?: StringFilter<"ScenarioStep"> | string
     stepId?: StringFilter<"ScenarioStep"> | string
     keyword?: StringFilter<"ScenarioStep"> | string
+    position?: IntFilter<"ScenarioStep"> | number
   }
 
   export type RunScenarioUpsertWithWhereUniqueWithoutScenarioInput = {
@@ -24434,12 +25505,14 @@ export namespace Prisma {
 
   export type ScenarioStepCreateWithoutStepInput = {
     keyword: string
+    position: number
     scenario: ScenarioCreateNestedOneWithoutStepsInput
   }
 
   export type ScenarioStepUncheckedCreateWithoutStepInput = {
     scenarioId: string
     keyword: string
+    position: number
   }
 
   export type ScenarioStepCreateOrConnectWithoutStepInput = {
@@ -24524,6 +25597,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioCreateNestedManyWithoutScenarioInput
     RunStep?: RunStepCreateNestedManyWithoutScenarioInput
@@ -24537,6 +25611,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     scenarioTags?: ScenarioTagUncheckedCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioUncheckedCreateNestedManyWithoutScenarioInput
     RunStep?: RunStepUncheckedCreateNestedManyWithoutScenarioInput
@@ -24591,6 +25666,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUpdateManyWithoutScenarioNestedInput
     RunStep?: RunStepUpdateManyWithoutScenarioNestedInput
@@ -24604,6 +25680,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     scenarioTags?: ScenarioTagUncheckedUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUncheckedUpdateManyWithoutScenarioNestedInput
     RunStep?: RunStepUncheckedUpdateManyWithoutScenarioNestedInput
@@ -24715,6 +25792,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     RunFeature?: RunFeatureCreateNestedManyWithoutFeatureInput
     MapNodeFeatureData?: MapNodeFeatureDataCreateNestedOneWithoutFeatureInput
   }
@@ -24726,6 +25804,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     RunFeature?: RunFeatureUncheckedCreateNestedManyWithoutFeatureInput
     MapNodeFeatureData?: MapNodeFeatureDataUncheckedCreateNestedOneWithoutFeatureInput
   }
@@ -24770,6 +25849,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     RunFeature?: RunFeatureUpdateManyWithoutFeatureNestedInput
     MapNodeFeatureData?: MapNodeFeatureDataUpdateOneWithoutFeatureNestedInput
   }
@@ -24781,6 +25861,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     RunFeature?: RunFeatureUncheckedUpdateManyWithoutFeatureNestedInput
     MapNodeFeatureData?: MapNodeFeatureDataUncheckedUpdateOneWithoutFeatureNestedInput
   }
@@ -24816,6 +25897,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     steps?: ScenarioStepCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioCreateNestedManyWithoutScenarioInput
     RunStep?: RunStepCreateNestedManyWithoutScenarioInput
@@ -24829,6 +25911,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     steps?: ScenarioStepUncheckedCreateNestedManyWithoutScenarioInput
     RunScenario?: RunScenarioUncheckedCreateNestedManyWithoutScenarioInput
     RunStep?: RunStepUncheckedCreateNestedManyWithoutScenarioInput
@@ -24875,6 +25958,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     steps?: ScenarioStepUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUpdateManyWithoutScenarioNestedInput
     RunStep?: RunStepUpdateManyWithoutScenarioNestedInput
@@ -24888,6 +25972,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     steps?: ScenarioStepUncheckedUpdateManyWithoutScenarioNestedInput
     RunScenario?: RunScenarioUncheckedUpdateManyWithoutScenarioNestedInput
     RunStep?: RunStepUncheckedUpdateManyWithoutScenarioNestedInput
@@ -25111,6 +26196,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     featureTags?: FeatureTagCreateNestedManyWithoutFeatureInput
     RunFeature?: RunFeatureCreateNestedManyWithoutFeatureInput
   }
@@ -25122,6 +26208,7 @@ export namespace Prisma {
     description?: string | null
     active?: boolean
     contentHash?: string | null
+    position: number
     featureTags?: FeatureTagUncheckedCreateNestedManyWithoutFeatureInput
     RunFeature?: RunFeatureUncheckedCreateNestedManyWithoutFeatureInput
   }
@@ -25190,6 +26277,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     featureTags?: FeatureTagUpdateManyWithoutFeatureNestedInput
     RunFeature?: RunFeatureUpdateManyWithoutFeatureNestedInput
   }
@@ -25201,6 +26289,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
     contentHash?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: IntFieldUpdateOperationsInput | number
     featureTags?: FeatureTagUncheckedUpdateManyWithoutFeatureNestedInput
     RunFeature?: RunFeatureUncheckedUpdateManyWithoutFeatureNestedInput
   }
@@ -25596,6 +26685,7 @@ export namespace Prisma {
   export type ScenarioStepCreateManyScenarioInput = {
     stepId: string
     keyword: string
+    position: number
   }
 
   export type RunScenarioCreateManyScenarioInput = {
@@ -25631,17 +26721,20 @@ export namespace Prisma {
 
   export type ScenarioStepUpdateWithoutScenarioInput = {
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     step?: StepUpdateOneRequiredWithoutScenarioStepNestedInput
   }
 
   export type ScenarioStepUncheckedUpdateWithoutScenarioInput = {
     stepId?: StringFieldUpdateOperationsInput | string
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type ScenarioStepUncheckedUpdateManyWithoutScenarioInput = {
     stepId?: StringFieldUpdateOperationsInput | string
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type RunScenarioUpdateWithoutScenarioInput = {
@@ -25704,6 +26797,7 @@ export namespace Prisma {
   export type ScenarioStepCreateManyStepInput = {
     scenarioId: string
     keyword: string
+    position: number
   }
 
   export type RunStepCreateManyStepInput = {
@@ -25719,17 +26813,20 @@ export namespace Prisma {
 
   export type ScenarioStepUpdateWithoutStepInput = {
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     scenario?: ScenarioUpdateOneRequiredWithoutStepsNestedInput
   }
 
   export type ScenarioStepUncheckedUpdateWithoutStepInput = {
     scenarioId?: StringFieldUpdateOperationsInput | string
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type ScenarioStepUncheckedUpdateManyWithoutStepInput = {
     scenarioId?: StringFieldUpdateOperationsInput | string
     keyword?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
   }
 
   export type RunStepUpdateWithoutStepInput = {
